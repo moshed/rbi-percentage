@@ -83,6 +83,12 @@ hotlinked — unavatar.io rate-limits and would leave holes in the footer. To re
 
 `build.py` only rewrites the `window.__RBI__` blob, so the images survive every refresh.
 
+## Remembered settings
+Min PA and the `Walks aren't a chance` checkbox persist in `localStorage` under
+`rbipct.controls`. Every read and write is wrapped in try/catch — the accessor itself
+throws in a private window or a thumbnail preview, not just returns null. Sort order is
+deliberately not stored.
+
 ## Design
 Greenbar-ledger look: paper ground, banded rows, IBM Plex Mono throughout,
 Barlow Condensed for the heading and player names. Light and dark palettes are both
