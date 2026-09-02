@@ -77,6 +77,7 @@ def season_rows(s, tg):
         players[p['id']] = dict(
             id=p['id'], n=p['fullName'],
             t=TEAM_ABBR.get(sp.get('team', {}).get('name', ''), '---'),
+            tn=sp.get('team', {}).get('name', ''),      # searchable full club name
             g=st.get('gamesPlayed', 0), pa=st['plateAppearances'],
             rbi=st.get('rbi', 0), hr=st.get('homeRuns', 0),
             avg=st.get('avg', '.000'), ops=st.get('ops', '.000'),
