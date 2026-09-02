@@ -124,3 +124,21 @@ defined as CSS custom properties on `:root`, then redone for
 
 Data is inlined as `window.__RBI__` near the bottom of `index.html`, so the page has no
 network dependency at runtime except Google Fonts.
+
+## Qualifying across a multi-season window
+**"Qualifying" means he qualified in at least ONE season** — not 3.1 PA per team game
+across the whole span. That span rule is ~9,000 plate appearances over eighteen years and
+leaves six hitters on the list; Moshe caught it. The Min PA figure shown is one season's
+worth (~502) and the other options are fractions of that, so the choice stays meaningful
+whatever window is on screen.
+
+Two controls, deliberately separate:
+
+| Control | What it decides |
+|---|---|
+| Min PA / Qualifying | **who appears** on the list |
+| `Qualified seasons only` | **which of his seasons count** toward the totals |
+
+With `Qualified seasons only` on, a hitter's part-time years are dropped whole, so a
+rookie half-season cannot drag his rate. The `Sn` column shows how many seasons went in,
+and appears only when the window spans more than one.
