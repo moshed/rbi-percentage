@@ -2,7 +2,9 @@ name: Refresh data
 
 on:
   schedule:
-    - cron: '25 11 * * *'      # 07:25 America/New_York, after every game has finished
+    # The live numbers come from Supabase; this only keeps the offline copy
+    # baked into index.html from going stale.
+    - cron: '25 12 * * 1'      # Mondays, 08:25 America/New_York
   workflow_dispatch:
 
 permissions:

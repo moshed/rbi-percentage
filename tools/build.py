@@ -160,6 +160,12 @@ def add_leverage(players, risp, games):
                 print(f"  leverage {done}/{len(games)}")
 
 
+def leaders_pool(s):
+    """Every hitter with a plate appearance, plus each team's games played."""
+    tg = team_games(s)
+    return season_rows(s, tg), tg
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--season', type=int, default=datetime.date.today().year)
