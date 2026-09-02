@@ -43,6 +43,16 @@ a `q` flag on every player, so the cutoff moves with the season instead of being
 Desktop layout is pinned: `body` does not scroll, the table does, so the column headings
 stay visible. Under 820px it falls back to normal page flow with a static heading row.
 
+## Bot links in the footer
+The five X handles carry their profile photos, **inlined as base64 JPEG data URIs**, not
+hotlinked — unavatar.io rate-limits and would leave holes in the footer. To refresh one:
+
+    curl -sL -o a.img https://unavatar.io/twitter/<handle>   # /x/<handle> if that 403s
+    sips -s format jpeg -s formatOptions 72 -Z 44 a.img --out a.jpg
+    base64 -i a.jpg          # paste into the <img src="data:image/jpeg;base64,...">
+
+`build.py` only rewrites the `window.__RBI__` blob, so the images survive every refresh.
+
 ## Design
 Greenbar-ledger look: paper ground, banded rows, IBM Plex Mono throughout,
 Barlow Condensed for the heading and player names. Light and dark palettes are both
