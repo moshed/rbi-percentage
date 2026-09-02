@@ -55,6 +55,11 @@ input[type=search]::placeholder{color:var(--muted);font-weight:500}
 .bar label{color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
 .bar label.tog{text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--ink-2)}
 .bar label.tog:has(:checked){color:var(--accent)}
+.rng{display:inline-flex;align-items:center;gap:6px;color:var(--muted);
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.rng select,.rng input{margin-left:2px}
+.rng input[type=date]{width:132px;font-size:12px}
+.rng .dash{color:var(--rule);font-weight:400}
 .tog{display:inline-flex;align-items:center;gap:7px;background:var(--card);
   border:1.5px solid var(--rule);border-radius:9px;padding:6px 11px 6px 9px;
   font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer;user-select:none;
@@ -175,6 +180,12 @@ footer a:hover{text-decoration:underline}
 
   <div class="bar">
     <input type="search" id="q" placeholder="Search player or team — try “Yankees”" autocomplete="off" aria-label="Search player or team">
+    <label class="rng">Seasons
+      <select id="s1"></select><span class="dash">&ndash;</span><select id="s2"></select>
+    </label>
+    <label class="rng">Dates
+      <input type="date" id="d1"><span class="dash">&ndash;</span><input type="date" id="d2">
+    </label>
     <label for="minpa">Min PA</label>
     <select id="minpa">
       <option value="q" selected>Qualifying</option>
@@ -263,17 +274,39 @@ const COLS = [
 ];
 /* Remember the two controls between visits. Storage can throw outright in a
    private window or a preview, so every touch is guarded. */
+const FIRST_SEASON = 2009;          // Justin Turner's debut year
 const REMEMBER = 'rbipct.controls';
+function fillSeasons() {
+  const now = META.season;
+  const opts = [];
+  for (let y = now; y >= FIRST_SEASON; y--) opts.push('<option value="' + y + '">' + y + '</option>');
+  $('s1').innerHTML = opts.join('');
+  $('s2').innerHTML = opts.join('');
+  $('s1').value = now;
+  $('s2').value = now;
+}
+/** The window the table covers. Dates win; blank dates mean the whole season span. */
+function currentRange() {
+  const a = Math.min(+$('s1').value, +$('s2').value);
+  const b = Math.max(+$('s1').value, +$('s2').value);
+  return [$('d1').value || a + '-01-01', $('d2').value || b + '-12-31'];
+}
 function loadControls() {
   try {
     const v = JSON.parse(localStorage.getItem(REMEMBER) || '{}');
     if (v.minpa && [...$('minpa').options].some(o => o.value === v.minpa)) $('minpa').value = v.minpa;
     if (typeof v.incbb === 'boolean') $('incbb').checked = v.incbb;
+    if (v.s1 && $('s1').querySelector('[value="' + v.s1 + '"]')) $('s1').value = v.s1;
+    if (v.s2 && $('s2').querySelector('[value="' + v.s2 + '"]')) $('s2').value = v.s2;
+    if (v.d1) $('d1').value = v.d1;
+    if (v.d2) $('d2').value = v.d2;
   } catch (e) { /* no stored settings, use the defaults */ }
 }
 function saveControls() {
   try {
-    localStorage.setItem(REMEMBER, JSON.stringify({ minpa: $('minpa').value, incbb: $('incbb').checked }));
+    localStorage.setItem(REMEMBER, JSON.stringify({
+      minpa: $('minpa').value, incbb: $('incbb').checked,
+      s1: $('s1').value, s2: $('s2').value, d1: $('d1').value, d2: $('d2').value }));
   } catch (e) { /* storage unavailable; the page still works */ }
 }
 
@@ -409,31 +442,51 @@ document.querySelectorAll('#head th').forEach((th, i) => {
 })();
 
 /* ---- live numbers ----
-   The page ships with a snapshot so it renders instantly and still works if
-   Supabase is unreachable. Then it swaps in the live table, which a Supabase
-   cron job tops up every morning with the previous night's games. */
-(function () {
-  const SB = 'https://atqhfbaurrmivjarowco.supabase.co/rest/v1';
-  const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0cWhmYmF1cnJtaXZqYXJvd2NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzODc2ODgsImV4cCI6MjA5NTk2MzY4OH0.buWqvUnwid4QEE6m9OFM7n1tu51mcogTc01oG7pdtJI';
-  const h = { apikey: ANON, Authorization: 'Bearer ' + ANON };
-  const cols = 'id,n,t,tn,g,pa,rbi,hr,avg,ops,q,risp,pct,pct2';
-  Promise.all([
-    fetch(SB + '/rbipct_leaders?season=eq.' + M.season + '&select=' + cols + '&limit=2000', { headers: h }),
-    fetch(SB + '/rbipct_meta?season=eq.' + M.season, { headers: h })
-  ]).then(async ([a, b]) => {
-    if (!a.ok || !b.ok) throw new Error('rest ' + a.status + '/' + b.status);
-    const rows = await a.json(), meta = (await b.json())[0];
-    if (!rows.length || !meta) throw new Error('empty');
-    RAW = rows.map(r => ({ ...r, q: Number(r.q) || 0 }));
-    META = { ...META, ...meta, updated: (meta.updated || '').slice(0, 10) };
-    applyMode();
-    stamp('live');
-    draw();
-  }).catch(() => stamp('snapshot'));
-})();
+   The page ships with a snapshot of the current season so it renders instantly
+   and still works if Supabase is unreachable. Then it asks Supabase for whatever
+   window the range controls are showing. A cron job tops the data up every
+   morning with the previous night's games. */
+const SB = 'https://atqhfbaurrmivjarowco.supabase.co/rest/v1';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0cWhmYmF1cnJtaXZqYXJvd2NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzODc2ODgsImV4cCI6MjA5NTk2MzY4OH0.buWqvUnwid4QEE6m9OFM7n1tu51mcogTc01oG7pdtJI';
+
+function rpc(fn, body) {
+  return fetch(SB + '/rpc/' + fn, {
+    method: 'POST',
+    headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }).then(r => { if (!r.ok) throw new Error(fn + ' ' + r.status); return r.json(); });
+}
+
+let loadToken = 0;
+function loadRange() {
+  const [d1, d2] = currentRange();
+  const mine = ++loadToken;                       // a slower earlier request must not win
+  $('count').textContent = 'Loading ' + d1 + ' to ' + d2 + '…';
+  Promise.all([rpc('rbipct_range', { d1, d2 }), rpc('rbipct_range_meta', { d1, d2 })])
+    .then(([rows, meta]) => {
+      if (mine !== loadToken) return;
+      if (!rows.length) { $('count').textContent = 'No games in that range.'; return; }
+      RAW = rows.map(r => ({
+        ...r, q: Number(r.q) || 0,
+        pct: Number(r.pct) || 0, pctx: Number(r.pctx) || 0,
+        pct2: Number(r.pct2) || 0, pct2x: Number(r.pct2x) || 0,
+        risp: Number(r.risp) || 0, rispx: Number(r.rispx) || 0
+      }));
+      META = { ...META, ...(meta[0] || {}), range: [d1, d2] };
+      applyMode();
+      stamp('live');
+      draw();
+    })
+    .catch(() => { if (mine === loadToken) stamp('snapshot'); });
+}
 
 function stamp(kind) {
-  $('stamp').textContent = M.season + ' regular season · updated ' + M.updated +
+  const r = M.range;
+  const span = !r ? M.season + ' regular season'
+    : (r[0].slice(0, 4) === r[1].slice(0, 4) && r[0].endsWith('-01-01') && r[1].endsWith('-12-31'))
+      ? r[0].slice(0, 4) + ' regular season'
+      : r[0] + ' to ' + r[1];
+  $('stamp').textContent = span + ' · updated ' + M.updated +
     (kind === 'live' ? ' · live' : ' · offline copy');
 }
 
@@ -471,12 +524,16 @@ function fitName() {
 })();
 
 $('q').addEventListener('input', draw);
+['s1', 's2', 'd1', 'd2'].forEach(id =>
+  $(id).addEventListener('change', () => { saveControls(); loadRange(); }));
 $('minpa').addEventListener('change', () => { saveControls(); draw(); });
 $('incbb').addEventListener('change', () => { saveControls(); applyMode(); draw(); });
+fillSeasons();
 loadControls();
 applyMode();
 stamp('snapshot');
 draw();
+loadRange();
 </script>
 </body>
 </html>

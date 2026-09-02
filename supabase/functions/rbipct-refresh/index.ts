@@ -196,6 +196,20 @@ Deno.serve(async (req) => {
       })
     }
 
+    // How many games the majors played each day — "qualifying" scales off this.
+    const slate: Record<string, number> = {}
+    for (const pk of pks) slate[gameDate[pk]] = (slate[gameDate[pk]] ?? 0) + 1
+    await rest('rbipct_slate?on_conflict=game_date', {
+      method: 'POST',
+      body: JSON.stringify(Object.entries(slate).map(([game_date, games]) =>
+        ({ game_date, season, games }))),
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    })
+
+    // Roll the new plate appearances up to one row per hitter per day. Everything
+    // the page reads comes from there, so this is what makes the numbers move.
+    await rest('rpc/rbipct_rollup', { method: 'POST', body: JSON.stringify({ d1: from, d2: to }) })
+
     return Response.json({ ok: true, season, from, to, games: pks.length, rows: rows.length, ms: Date.now() - t0 })
   } catch (e) {
     return Response.json({ ok: false, error: String(e), ms: Date.now() - t0 }, { status: 500 })
