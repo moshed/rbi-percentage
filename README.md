@@ -1,27 +1,23 @@
 # rbipercentage.dancykier.com
 
-**Who Drives Them In** — the RBI leaderboard, divided by opportunity.
-
-Two stats the page publishes:
+**RBI Percentage** — every MLB hitter, sortable, with the RBI divided by the opportunity.
 
 | Stat | Formula |
 |---|---|
-| **DI%** (drive-in rate) | `(RBI − HR) ÷ runners on base when he batted` |
-| **CL%** (two-out clutch) | `(2-out RBI − 2-out HR) ÷ runners on base with two outs` |
+| **RBI%** | `(RBI − HR) ÷ ROB` |
+| **CL%** | `(2-out RBI − 2-out HR) ÷ 2-out ROB` |
 
-Subtracting home runs removes the run a hitter drove in with his own legs, so the
-numerator counts *other people* he sent home.
+`ROB` is every runner standing on base during his plate appearances, counted one at a
+time: a man on first is one, bases loaded is three. Home runs come off the top because
+that run is the hitter driving himself in — so the numerator is *other people* he sent
+home.
 
 ## Refresh the numbers
 
 ```bash
-python3 tools/build.py
+python3 tools/build.py            # ~20 seconds
 git commit -am "refresh data" && git push
 ```
 
-`build.py` reads every plate appearance of the top-40 RBI men from the MLB Stats API
-play log (`stats=playLog`), records the exact base state and out count at the deciding
-pitch, and rewrites the `window.__RBI__` blob inside `index.html`. It asserts the play
-log count matches the official plate-appearance total before it writes.
-
-The site is a single static `index.html` — no build step, no dependencies.
+`build.py` rewrites the `window.__RBI__` blob inside `index.html`. Nothing else changes.
+The site is a single static file with no build step and no dependencies.
