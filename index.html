@@ -97,7 +97,12 @@ td.lo{color:var(--warn)}
 .empty{padding:26px;text-align:center;color:var(--muted);font-weight:600}
 footer{flex:none;margin-top:11px;color:var(--muted);font-size:11.5px;font-weight:600;
   display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-footer a{color:var(--accent)}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{text-decoration:underline}
+.bots{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.bots .botlab{color:var(--muted);opacity:.8}
+.bots a{background:var(--chip);padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.bots a:hover{background:var(--accent-soft);text-decoration:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 @media (max-width:900px){
@@ -151,7 +156,15 @@ footer a{color:var(--accent)}
 
   <footer>
     <span id="stamp"></span>
-    <span>Source: MLB Stats API &middot; regular season &middot; <a href="https://github.com/moshed/rbi-percentage">source</a></span>
+    <nav class="bots" aria-label="My MLB bots on X">
+      <span class="botlab">My MLB bots</span>
+      <a href="https://x.com/mlbhomerbot">@mlbhomerbot</a>
+      <a href="https://x.com/mlbprospectsbot">@mlbprospectsbot</a>
+      <a href="https://x.com/MLBInjuryBot">@MLBInjuryBot</a>
+      <a href="https://x.com/mlbclosersbot">@mlbclosersbot</a>
+      <a href="https://x.com/MLBBulkbot">@MLBBulkbot</a>
+    </nav>
+    <span>MLB Stats API &middot; <a href="https://github.com/moshed/rbi-percentage">source</a></span>
   </footer>
 </div>
 <div id="tip" role="tooltip"></div>

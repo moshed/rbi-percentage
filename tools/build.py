@@ -182,6 +182,12 @@ def main():
         r['pct2'] = round(r['wRbi'] / r['wRisp'] * 100, 1) if r['wRisp'] else 0.0
 
     qual = [r for r in rows if r['q']]
+    # Out of season the leaderboard is empty or nobody has qualified yet. Leave the
+    # last good page alone rather than writing a blank one.
+    if not rows or not qual or not sum(r['risp'] for r in qual):
+        print(f"nothing to write: {len(rows)} hitters, {len(qual)} qualified — page left as is")
+        return
+
     meta = dict(season=s, updated=str(datetime.date.today()), n=len(rows), qual=len(qual),
                 qualPa=round(3.1 * max(tg.values())) if tg else 0,
                 avg=round(sum(r['rbi'] for r in qual) / sum(r['risp'] for r in qual) * 100, 1),
