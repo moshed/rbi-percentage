@@ -44,7 +44,17 @@ against the official season figures: they agree to the third decimal.
 | `rbipct_range(d1, d2)` | The leaderboard over any window. Sub-second across a full season, ~1.2 s across three. |
 | `rbipct_range_meta(d1, d2)` | League rates over qualified hitters for the same window, plus `qualPa`. |
 | `rbipct_team_games(d1, d2)` | Team games in the window, from `rbipct_slate`: `sum(games) * 2 / 30`. Qualifying is `3.1 x` this. |
+| `rbipct_seasons(a, b, min_pa)` | **The fast path.** Whole-season windows off the `rbipct_season_agg` materialized view — ~0.3 s across all eighteen seasons. |
+| `rbipct_seasons_meta(a, b)` | League rates for a whole-season window. |
 | `rbipct_rollup(d1, d2)` | Rebuilds `rbipct_day` from `rbipct_pa` for a window. The daily job calls it after ingest, so the rollup never drifts. |
+| `rbipct_refresh_agg()` | Refreshes `rbipct_season_agg`. **The daily job must call this** or the whole-season view keeps serving yesterday. |
+
+Two limits shaped the design, both worth remembering:
+- **The `anon` role gets a 3-second statement timeout.** A raw scan of all 860k daily rows
+  lands just over it, which is why whole seasons go through the materialized rollup.
+- **PostgREST caps a response at 1000 rows**, and the full span has ~7000 hitters. Both
+  functions take `min_pa` and filter in Postgres; `-1` means "whatever qualifies for this
+  window". They also `order by pa desc limit 900` as a backstop.
 
 Both range functions are `POST /rest/v1/rpc/<name>` with `{"d1": "...", "d2": "..."}`.
 

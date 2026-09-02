@@ -210,6 +210,10 @@ Deno.serve(async (req) => {
     // the page reads comes from there, so this is what makes the numbers move.
     await rest('rpc/rbipct_rollup', { method: 'POST', body: JSON.stringify({ d1: from, d2: to }) })
 
+    // The whole-season view of the page reads a materialized rollup. Without this it
+    // would keep serving yesterday's numbers.
+    await rest('rpc/rbipct_refresh_agg', { method: 'POST', body: '{}' })
+
     return Response.json({ ok: true, season, from, to, games: pks.length, rows: rows.length, ms: Date.now() - t0 })
   } catch (e) {
     return Response.json({ ok: false, error: String(e), ms: Date.now() - t0 }, { status: 500 })
