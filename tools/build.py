@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
 """Rebuild rbipercentage.dancykier.com from live MLB Stats API data.
 
-Every hitter in the majors, one row each: RBI, the runners he actually had on
-base, and RBI% = (RBI - HR) / runners on base.
+Every hitter in the majors, one row each.
+
+    RBI%  =  RBI / RISP
+    CL%   =  sum(RBI x LI) / sum(RISP x LI)
+
+RISP is every runner in scoring position during his plate appearances, counted one
+at a time: second and third on the bases is two, a man on first is none. Every RBI
+counts in the numerator, home runs included.
+
+LI is the MLB leverage index of that plate appearance, so a bases-loaded ninth
+counts for several times a blowout.
 
     python3 tools/build.py
     python3 tools/build.py --season 2027
 """
-import argparse, concurrent.futures, datetime, json, os, re, urllib.request
+import argparse, collections, concurrent.futures, datetime, json, os, re, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-API = "https://statsapi.mlb.com/api/v1/stats"
+API = "https://statsapi.mlb.com/api/v1"
 
-# Runners on base for each base state. This is the whole idea of the page.
-BASE_STATES = {'r1': 1, 'r2': 1, 'r3': 1, 'r12': 2, 'r13': 2, 'r23': 2, 'r123': 3}
+# Runners in scoring position for each base state. A man on first is worth nothing
+# here; second and third together are worth two.
+RISP_BY_STATE = {'r2': 1, 'r3': 1, 'r12': 1, 'r13': 1, 'r23': 2, 'r123': 2}
 
 TEAM_ABBR = {'Arizona Diamondbacks':'ARI','Atlanta Braves':'ATL','Baltimore Orioles':'BAL',
  'Boston Red Sox':'BOS','Chicago Cubs':'CHC','Chicago White Sox':'CWS','Cincinnati Reds':'CIN',
@@ -27,7 +37,7 @@ TEAM_ABBR = {'Arizona Diamondbacks':'ARI','Atlanta Braves':'ATL','Baltimore Orio
 
 def get(url):
     err = None
-    for _ in range(3):
+    for _ in range(4):
         try:
             with urllib.request.urlopen(url, timeout=120) as r:
                 return json.load(r)
@@ -37,10 +47,10 @@ def get(url):
 
 
 def paged(params):
-    """Every split for a league-wide query, following the offset pages."""
+    """Every split of a league-wide query, following the offset pages."""
     out, offset = [], 0
     while True:
-        d = get(f"{API}?{params}&limit=1000&offset={offset}")
+        d = get(f"{API}/stats?{params}&limit=1000&offset={offset}")
         splits = d['stats'][0]['splits']
         out += splits
         total = d['stats'][0].get('totalSplits', len(out))
@@ -49,12 +59,7 @@ def paged(params):
             return out
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--season', type=int, default=datetime.date.today().year)
-    args = ap.parse_args()
-    s = args.season
-
+def season_rows(s):
     players = {}
     for sp in paged(f"stats=season&group=hitting&season={s}&sportId=1&gameType=R&playerPool=All"):
         st, p = sp['stat'], sp['player']
@@ -63,77 +68,115 @@ def main():
         players[p['id']] = dict(
             id=p['id'], n=p['fullName'],
             t=TEAM_ABBR.get(sp.get('team', {}).get('name', ''), '---'),
-            g=st.get('gamesPlayed', 0), pa=st['plateAppearances'], ab=st.get('atBats', 0),
-            rbi=st.get('rbi', 0), hr=st.get('homeRuns', 0), h=st.get('hits', 0),
+            g=st.get('gamesPlayed', 0), pa=st['plateAppearances'],
+            rbi=st.get('rbi', 0), hr=st.get('homeRuns', 0),
             avg=st.get('avg', '.000'), ops=st.get('ops', '.000'),
-            rob=0, paOn=0, rob2=0, paOn2=0, rbi2=0, hr2=0)
-    print(f"{len(players)} hitters")
+            risp=0, rispPa=0, wRbi=0.0, wRisp=0.0, liSum=0.0, liPa=0)
+    return players
 
-    # One league-wide call per base state instead of one call per player.
-    for code, runners in BASE_STATES.items():
-        n = 0
+
+def add_risp(players, s):
+    """Season RISP totals: one league-wide call per base state, not one per player."""
+    for code, n in RISP_BY_STATE.items():
         for sp in paged(f"stats=statSplits&sitCodes={code}&group=hitting"
                         f"&season={s}&sportId=1&gameType=R&playerPool=All"):
             p = players.get(sp['player']['id'])
-            if not p:
-                continue
-            pa = sp['stat'].get('plateAppearances') or 0
-            p['rob'] += pa * runners
-            p['paOn'] += pa
-            n += 1
-        print(f"  {code}: {n} hitters, {runners} runner(s) each")
+            if p:
+                pa = sp['stat'].get('plateAppearances') or 0
+                p['risp'] += pa * n
+                p['rispPa'] += pa
 
-    # Two outs. The RBI and HR come from one league-wide split call, but the
-    # denominator — runners on base with two outs — cannot be had from the splits
-    # API at all: it will not cross base state with out count, and the sitCode
-    # "ron2" returns an empty array for hitting. So read the play log per hitter,
-    # which gives one row per plate appearance with both the bases and the outs.
-    for sp in paged(f"stats=statSplits&sitCodes=o2&group=hitting"
-                    f"&season={s}&sportId=1&gameType=R&playerPool=All"):
-        p = players.get(sp['player']['id'])
-        if p:
-            p['rbi2'] = sp['stat'].get('rbi') or 0
-            p['hr2'] = sp['stat'].get('homeRuns') or 0
 
-    def two_out_rob(p):
-        log = get(f"https://statsapi.mlb.com/api/v1/people/{p['id']}/stats?stats=playLog"
-                  f"&group=hitting&season={s}&gameType=R")
-        splits = log['stats'][0]['splits'] if log['stats'] else []
-        rob2 = pa2 = 0
-        for row in splits:
+def risp_per_pa(players, s):
+    """(gamePk, atBatIndex) -> runners in scoring position, from each hitter's play log.
+
+    The play log is the only place base state and plate appearance meet, and its
+    atBatNumber is the winProbability atBatIndex plus one.
+    """
+    def one(p):
+        log = get(f"{API}/people/{p['id']}/stats?stats=playLog&group=hitting"
+                  f"&season={s}&gameType=R")
+        rows = log['stats'][0]['splits'] if log['stats'] else []
+        out = []
+        for row in rows:
             play = row['stat']['play']
             # An inning-ending caught stealing logs a row that is not a completed PA.
             if not play['details'].get('isPlateAppearance'):
                 continue
             c = play['count']
-            if c['outs'] == 2:
-                n = c['runnerOn1b'] + c['runnerOn2b'] + c['runnerOn3b']
-                rob2 += n
-                if n:
-                    pa2 += 1
-        return p['id'], rob2, pa2
+            out.append((row['game']['gamePk'], play['atBatNumber'] - 1,
+                        (1 if c['runnerOn2b'] else 0) + (1 if c['runnerOn3b'] else 0)))
+        return out
+
+    risp, games, done = {}, set(), 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+        for rows in ex.map(one, list(players.values())):
+            for pk, idx, n in rows:
+                risp[(pk, idx)] = n
+                games.add(pk)
+            done += 1
+            if done % 100 == 0:
+                print(f"  play logs {done}/{len(players)}")
+    return risp, sorted(games)
+
+
+def add_leverage(players, risp, games):
+    """Weight every plate appearance by the leverage index of that moment."""
+    fields = "fields=atBatIndex,leverageIndex,result,rbi,matchup,batter,id"
+
+    def one(pk):
+        return pk, get(f"{API}/game/{pk}/winProbability?{fields}")
 
     done = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
-        for pid, rob2, pa2 in ex.map(two_out_rob, list(players.values())):
-            players[pid]['rob2'] = rob2
-            players[pid]['paOn2'] = pa2
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
+        for pk, plays in ex.map(one, games):
+            for play in plays:
+                idx = play.get('atBatIndex')
+                n = risp.get((pk, idx))
+                if n is None:                       # not a completed plate appearance
+                    continue
+                p = players.get(play.get('matchup', {}).get('batter', {}).get('id'))
+                if not p:
+                    continue
+                li = play.get('leverageIndex')
+                li = 1.0 if li is None else float(li)
+                p['wRbi'] += (play.get('result', {}).get('rbi') or 0) * li
+                p['wRisp'] += n * li
+                p['liSum'] += li
+                p['liPa'] += 1
             done += 1
-            if done % 50 == 0:
-                print(f"  play logs {done}/{len(players)}")
+            if done % 250 == 0:
+                print(f"  leverage {done}/{len(games)}")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--season', type=int, default=datetime.date.today().year)
+    args = ap.parse_args()
+    s = args.season
+
+    players = season_rows(s)
+    print(f"{len(players)} hitters")
+    add_risp(players, s)
+    print("season RISP done")
+    risp, games = risp_per_pa(players, s)
+    print(f"{len(risp)} plate appearances across {len(games)} games")
+    add_leverage(players, risp, games)
+    print("leverage done")
 
     rows = sorted(players.values(), key=lambda r: -r['rbi'])
     for r in rows:
-        r['di'] = r['rbi'] - r['hr']                      # runners he drove in
-        r['pct'] = round(r['di'] / r['rob'] * 100, 1) if r['rob'] else 0.0
-        r['di2'] = r.get('rbi2', 0) - r.get('hr2', 0)     # runners driven in with two outs
-        r['pct2'] = round(r['di2'] / r['rob2'] * 100, 1) if r.get('rob2') else 0.0
+        r['pct'] = round(r['rbi'] / r['risp'] * 100, 1) if r['risp'] else 0.0
+        r['pct2'] = round(r['wRbi'] / r['wRisp'] * 100, 1) if r['wRisp'] else 0.0
+        r['li'] = round(r['liSum'] / r['liPa'], 2) if r['liPa'] else 0.0
 
     qual = [r for r in rows if r['pa'] >= 300]
-    meta = dict(season=s, updated=str(datetime.date.today()), n=len(rows),
-                avg=round(sum(r['di'] for r in qual) / sum(r['rob'] for r in qual) * 100, 1),
-                avg2=round(sum(r['di2'] for r in qual) / sum(r['rob2'] for r in qual) * 100, 1),
-                qual=len(qual))
+    meta = dict(season=s, updated=str(datetime.date.today()), n=len(rows), qual=len(qual),
+                avg=round(sum(r['rbi'] for r in qual) / sum(r['risp'] for r in qual) * 100, 1),
+                avg2=round(sum(r['wRbi'] for r in qual) / sum(r['wRisp'] for r in qual) * 100, 1))
+    for r in rows:
+        for k in ('wRbi', 'wRisp', 'liSum', 'liPa'):
+            del r[k]
 
     blob = json.dumps(dict(meta=meta, players=rows), separators=(',', ':'))
     page = os.path.join(ROOT, 'index.html')
