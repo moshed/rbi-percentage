@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="RBI divided by opportunity. Every plate appearance of the 2026 season scored for runners on base, so you can see who actually drives them in — plus a two-out clutch rate.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Who Drives Them In">
+<meta property="og:description" content="RBI% — runners driven in divided by runners on base. And a two-out clutch rate nobody publishes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rbipercentage.dancykier.com/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2316674A'/%3E%3Ctext x='16' y='22' font-family='Helvetica,Arial' font-size='15' font-weight='bold' text-anchor='middle' fill='%23F4F5EF'%3E%25%3C/text%3E%3C/svg%3E">
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Who Drives Them In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+:root{
+  --paper:#F4F5EF; --band:#E9EDE3; --card:#FBFCF8;
+  --ink:#191C15; --ink-2:#3C4335; --muted:#6B7264; --rule:#C9D0C2; --rule-soft:#DDE2D6;
+  --accent:#16674A; --accent-mark:#2E8B67; --accent-soft:#D6E7DE;
+  --warn:#A33520; --warn-soft:#F0DBD4;
+  --shadow:0 1px 0 rgba(25,28,21,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111409; --band:#191D14; --card:#171B12;
+    --ink:#E9ECE1; --ink-2:#C2C9B8; --muted:#8F9885; --rule:#2E3527; --rule-soft:#242A1E;
+    --accent:#6FD3A4; --accent-mark:#4FBF8F; --accent-soft:#1D3A2C;
+    --warn:#E58A72; --warn-soft:#3A241D;
+    --shadow:0 1px 0 rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111409; --band:#191D14; --card:#171B12;
+  --ink:#E9ECE1; --ink-2:#C2C9B8; --muted:#8F9885; --rule:#2E3527; --rule-soft:#242A1E;
+  --accent:#6FD3A4; --accent-mark:#4FBF8F; --accent-soft:#1D3A2C;
+  --warn:#E58A72; --warn-soft:#3A241D;
+  --shadow:0 1px 0 rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:"Source Serif 4",Georgia,serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 96px}
+h1,h2,h3,.disp{font-family:"Barlow Condensed","Haettenschweiler",Impact,sans-serif;font-weight:700;letter-spacing:.01em;text-wrap:balance;margin:0}
+.num{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+/* ---- masthead ---- */
+header.mast{border-bottom:2px solid var(--ink);padding:44px 0 18px;margin-bottom:28px}
+.mast-top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:20px}
+header.mast h1{font-size:clamp(44px,7.4vw,88px);line-height:.92;letter-spacing:-.005em;text-transform:uppercase}
+.deck{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:36px;margin-top:18px;align-items:start}
+.deck p{margin:0;max-width:62ch;color:var(--ink-2)}
+.deck .lede{font-size:19px}
+.pullquote{border-left:3px solid var(--accent-mark);padding:2px 0 2px 16px;font-style:italic;color:var(--ink-2);font-size:15px}
+.pullquote cite{display:block;font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+
+/* ---- formulas ---- */
+.formulas{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0;border:1px solid var(--rule);border-radius:3px;background:var(--card);overflow:hidden;margin:34px 0 8px}
+.fx{padding:20px 22px}
+.fx + .fx{border-left:1px solid var(--rule)}
+.fx h3{font-size:23px;text-transform:uppercase;letter-spacing:.02em}
+.fx .tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:3px 7px;border-radius:2px;margin-bottom:10px}
+.fx .eq{font-family:"IBM Plex Mono",monospace;font-size:13.5px;line-height:1.75;margin:12px 0 10px;color:var(--ink);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.fx .frac{display:inline-flex;flex-direction:column;text-align:center}
+.fx .frac .den{border-top:1.5px solid var(--ink);padding-top:3px;margin-top:3px}
+.fx p{margin:0;font-size:14.5px;color:var(--ink-2)}
+
+/* ---- tiles ---- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:3px;overflow:hidden;margin:26px 0 0}
+.tile{background:var(--card);padding:16px 18px 18px}
+.tile .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:44px;line-height:1;margin:8px 0 4px;font-variant-numeric:tabular-nums}
+.tile .s{font-size:13px;color:var(--ink-2);line-height:1.4}
+
+section{margin-top:56px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:18px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:8px;margin-bottom:20px}
+.sec-head h2{font-size:30px;text-transform:uppercase}
+.sec-head .note{font-size:13.5px;color:var(--muted);max-width:56ch}
+
+/* ---- paired boards ---- */
+.boards{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.board{min-width:0}
+.board-cap{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.board-cap h3{font-size:19px;text-transform:uppercase;letter-spacing:.04em}
+.board-cap .sub{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rowlist{border-top:1px solid var(--rule)}
+.rk{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.who{min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden}
+.nm{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:16.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.06em;color:var(--muted);flex:none}
+.val{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.rwb{display:grid;grid-template-columns:26px minmax(0,1fr) 48px;align-items:center;gap:8px;padding:6px 6px 8px;border-bottom:1px solid var(--rule-soft)}
+.rwb:nth-child(even){background:var(--band)}
+.rwb .line2{grid-column:2/3;display:flex;align-items:center;gap:8px;margin-top:4px}
+.mv{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:600;padding:1px 4px;border-radius:2px;flex:none;letter-spacing:.02em}
+.mv.up{color:var(--accent);background:var(--accent-soft)}
+.mv.dn{color:var(--warn);background:var(--warn-soft)}
+.mv.eq{color:var(--muted);background:var(--rule-soft)}
+.avgline{position:absolute;top:-1px;bottom:-1px;width:1.5px;background:var(--warn);opacity:.65}
+
+/* ---- scatter ---- */
+.chartbox{border:1px solid var(--rule);border-radius:3px;background:var(--card);padding:18px 18px 10px;position:relative}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.legend .dash{display:inline-block;width:18px;height:0;border-top:2px dashed var(--warn);margin-right:6px;vertical-align:4px}
+.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;background:var(--ink);color:var(--paper);padding:8px 10px;border-radius:3px;font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:1.5;white-space:nowrap;z-index:9;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.tip b{font-family:"Barlow Condensed",sans-serif;font-size:15px;letter-spacing:.02em}
+svg{display:block;width:100%;height:auto}
+svg text{font-family:"IBM Plex Mono",monospace}
+
+/* ---- clutch ---- */
+.clutch-list{border-top:1px solid var(--rule)}
+.cl{display:grid;grid-template-columns:24px 190px minmax(0,1fr) 52px;gap:12px;align-items:center;padding:7px 6px;border-bottom:1px solid var(--rule-soft)}
+.cl:nth-child(even){background:var(--band)}
+.cl .who{overflow:hidden}
+.cl .track{position:relative;height:16px}
+.cl .cbar{position:absolute;left:0;top:5px;height:6px;background:var(--accent-mark);border-radius:0 3px 3px 0}
+.cl .dot{position:absolute;top:2.5px;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:var(--card);border:2px solid var(--ink-2)}
+.cl .avgtick{position:absolute;top:0;bottom:0;width:1px;background:var(--warn);opacity:.5}
+
+/* ---- table ---- */
+.tablescroll{overflow-x:auto;border:1px solid var(--rule);border-radius:3px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-variant-numeric:tabular-nums}
+thead th{position:sticky;top:0;background:var(--card);text-align:right;padding:10px 9px;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1.5px solid var(--ink);cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{color:var(--accent)}
+thead th.on{color:var(--accent)}
+thead th:first-child,thead th:nth-child(2){text-align:left}
+tbody td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--rule-soft);white-space:nowrap}
+tbody tr:nth-child(even){background:var(--band)}
+tbody td:nth-child(2){text-align:left;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:15.5px}
+tbody td:first-child{text-align:left;color:var(--muted)}
+td.hi{color:var(--accent);font-weight:600}
+td.lo{color:var(--warn)}
+.thsplit{border-left:1px solid var(--rule)}
+td.thsplit{border-left:1px solid var(--rule-soft)}
+
+/* ---- method ---- */
+.method{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;font-size:14.5px;color:var(--ink-2)}
+.method h3{font-size:17px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.method p{margin:0 0 10px}
+.method code{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--band);padding:1px 4px;border-radius:2px}
+footer{margin-top:48px;padding-top:14px;border-top:1px solid var(--rule);font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (max-width:860px){
+  .deck{grid-template-columns:1fr;gap:18px}
+  .boards{grid-template-columns:1fr}
+  .fx + .fx{border-left:0;border-top:1px solid var(--rule)}
+  .cl{grid-template-columns:22px 150px minmax(0,1fr) 48px;gap:8px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="mast-top">
+    <span class="eyebrow">2026 Regular Season &middot; Through September 2</span>
+    <span class="eyebrow">Top 40 RBI Men &middot; MLB Stats API</span>
+  </div>
+  <h1>Who Drives<br>Them In</h1>
+  <div class="deck">
+    <p class="lede">The RBI counts what a hitter did <em>and</em> what the eight men in front of him did. So count the second part, then divide it out. Every plate appearance below is scored for how many runners were standing on base &mdash; and how many of them the hitter sent home.</p>
+    <div class="pullquote">
+      &ldquo;RBIs are merely a byproduct of opportunity created by other players. Some guys have way more opportunities with RISP, so it&rsquo;s unfair to say one player is better than another based on RBI.&rdquo;
+      <cite>The complaint this page answers</cite>
+    </div>
+  </div>
+
+  <div class="formulas">
+    <div class="fx">
+      <span class="tag">Stat 1 &middot; Drive-in Rate</span>
+      <h3>DI%</h3>
+      <div class="eq">
+        <span class="frac"><span>RBI &minus; HR</span><span class="den">runners on base when he batted</span></span>
+      </div>
+      <p>Subtracting home runs removes the run he drove in with his own legs, so the top line is <em>other people</em> he sent home. The bottom line is every runner he ever had a chance to send home.</p>
+    </div>
+    <div class="fx">
+      <span class="tag">Stat 2 &middot; Two-out Clutch</span>
+      <h3>CL%</h3>
+      <div class="eq">
+        <span class="frac"><span>2-out RBI &minus; 2-out HR</span><span class="den">runners on base with two outs</span></span>
+      </div>
+      <p>Same math, hard mode. With two outs a runner scores only if this hitter does it &mdash; nobody behind him gets another swing that inning.</p>
+    </div>
+  </div>
+
+  <div class="tiles" id="tiles"></div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <h2>The Same 40 Men, Ranked Twice</h2>
+    <p class="note">Left: the RBI leaderboard as it is published. Right: the same players ranked by how much of their opportunity they converted. The chip shows how far each man moves.</p>
+  </div>
+  <div class="boards">
+    <div class="board">
+      <div class="board-cap"><h3>Runs Batted In</h3><span class="sub">Counting stat</span></div>
+      <div class="rowlist" id="boardRbi"></div>
+    </div>
+    <div class="board">
+      <div class="board-cap"><h3>Drive-in Rate</h3><span class="sub">Red line = 40-man average</span></div>
+      <div class="rowlist" id="boardConv"></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>The Opportunity Gap</h2>
+    <p class="note">Every dot is one hitter. Across is how many runners he inherited; up is how many he drove home. The dashed line is the 40-man average rate &mdash; above it he beat his chances, below it he wasted them.</p>
+  </div>
+  <div class="chartbox">
+    <div class="legend">
+      <span><i style="background:var(--accent-mark)"></i>Above average rate</span>
+      <span><i style="background:var(--muted)"></i>Below average rate</span>
+      <span><span class="dash"></span>Expected at the 40-man rate</span>
+    </div>
+    <div id="scatter"></div>
+    <div class="tip" id="tip"></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>Two Outs, Runners On</h2>
+    <p class="note">Top 15 by two-out drive-in rate. The bar is the two-out rate; the ring is the same hitter&rsquo;s all-situations rate, so you can see who actually rises with the inning on the line.</p>
+  </div>
+  <div class="chartbox">
+    <div class="legend">
+      <span><i style="background:var(--accent-mark);border-radius:2px;height:7px;width:16px"></i>Two-out drive-in rate</span>
+      <span><i style="background:transparent;border:2px solid var(--ink-2)"></i>His all-situations rate</span>
+      <span><span class="dash"></span>40-man two-out average</span>
+    </div>
+    <div class="clutch-list" id="clutch"></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>Full Card</h2>
+    <p class="note">Click any column heading to sort. ROB is runners on base during his plate appearances; DI is runners driven in.</p>
+  </div>
+  <div class="tablescroll">
+    <table id="tbl">
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>How This Was Counted</h2></div>
+  <div class="method">
+    <div>
+      <h3>The denominator is real, not modeled</h3>
+      <p>For each of the 40 hitters the page reads every plate appearance of the 2026 season from the MLB Stats API play log, and records the exact base state and out count at the deciding pitch. A man on first is one opportunity; bases loaded is three.</p>
+      <p>Totals reconcile: the per-base-state plate appearances add up to the official <code>Runners On</code> split, and the play log count matches the official plate-appearance total for every player.</p>
+    </div>
+    <div>
+      <h3>Why RBI minus HR</h3>
+      <p>A solo home run is an RBI with nobody on base &mdash; it would give a hitter credit with no opportunity to divide by. Every home run contains exactly one self-driven run, so <code>RBI &minus; HR</code> is precisely the number of <em>other</em> runners a hitter sent home. Sluggers lose a little here; that is the point.</p>
+    </div>
+    <div>
+      <h3>Does the stat already exist?</h3>
+      <p>Partly. Baseball-Reference publishes baserunner counts inside its situational splits, so the raw pieces are on the internet. Nobody puts them on a leaderboard, nobody says them on a broadcast, and the two-out version is not published anywhere that shows up in a search.</p>
+      <p>Caveat: this is a rate over roughly 300&ndash;430 opportunities. That is a real sample, but not a career.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>Source: MLB Stats API &middot; play log + situational splits &middot; regular season only</span>
+  <span id="stamp"></span>
+</footer>
+</div>
+
+<script>window.__RBI__={"meta":{"season":2026,"updated":"2026-09-02","n":40,"avgConv":16.0,"avgClutch":15.3},"players":[{"id":701398,"name":"Sal Stewart","team":"CIN","pos":"1B","g":139,"pa":603,"rbi":105,"hr":31,"avg":".268","ops":".827","di":74,"rob":375,"conv":19.7,"rob2":151,"di2":25,"clutch":16.6,"rbi2":31,"hr2":6,"paOn":277,"paOn2":106,"rispPa":166,"rbiRank":1,"convRank":1,"clutchRank":18,"robRank":12,"delta":0},{"id":676475,"name":"Alec Burleson","team":"STL","pos":"1B","g":138,"pa":583,"rbi":100,"hr":21,"avg":".285","ops":".821","di":79,"rob":429,"conv":18.4,"rob2":163,"di2":31,"clutch":19.0,"rbi2":36,"hr2":5,"paOn":319,"paOn2":116,"rispPa":176,"rbiRank":2,"convRank":7,"clutchRank":2,"robRank":2,"delta":-5},{"id":691023,"name":"Jordan Walker","team":"STL","pos":"RF","g":135,"pa":577,"rbi":99,"hr":28,"avg":".288","ops":".850","di":71,"rob":403,"conv":17.6,"rob2":158,"di2":28,"clutch":17.7,"rbi2":39,"hr2":11,"paOn":277,"paOn2":114,"rispPa":175,"rbiRank":3,"convRank":11,"clutchRank":9,"robRank":3,"delta":-8},{"id":682928,"name":"CJ Abrams","team":"WSH","pos":"SS","g":132,"pa":570,"rbi":94,"hr":29,"avg":".269","ops":".852","di":65,"rob":343,"conv":19.0,"rob2":150,"di2":25,"clutch":16.7,"rbi2":37,"hr2":12,"paOn":245,"paOn2":118,"rispPa":150,"rbiRank":4,"convRank":4,"clutchRank":16,"robRank":28,"delta":0},{"id":670541,"name":"Yordan Alvarez","team":"HOU","pos":"DH","g":137,"pa":601,"rbi":94,"hr":37,"avg":".316","ops":"1.036","di":57,"rob":328,"conv":17.4,"rob2":126,"di2":22,"clutch":17.5,"rbi2":29,"hr2":7,"paOn":249,"paOn2":88,"rispPa":126,"rbiRank":5,"convRank":12,"clutchRank":11,"robRank":31,"delta":-7},{"id":624413,"name":"Pete Alonso","team":"BAL","pos":"1B","g":139,"pa":602,"rbi":91,"hr":32,"avg":".269","ops":".859","di":59,"rob":378,"conv":15.6,"rob2":164,"di2":25,"clutch":15.2,"rbi2":35,"hr2":10,"paOn":283,"paOn2":122,"rispPa":150,"rbiRank":6,"convRank":23,"clutchRank":22,"robRank":10,"delta":-17},{"id":691718,"name":"Pete Crow-Armstrong","team":"CHC","pos":"CF","g":139,"pa":622,"rbi":91,"hr":38,"avg":".280","ops":".943","di":53,"rob":346,"conv":15.3,"rob2":142,"di2":25,"clutch":17.6,"rbi2":35,"hr2":10,"paOn":252,"paOn2":105,"rispPa":155,"rbiRank":7,"convRank":26,"clutchRank":10,"robRank":26,"delta":-19},{"id":691406,"name":"Junior Caminero","team":"TB","pos":"3B","g":138,"pa":602,"rbi":88,"hr":37,"avg":".283","ops":".904","di":51,"rob":379,"conv":13.5,"rob2":147,"di2":18,"clutch":12.2,"rbi2":26,"hr2":8,"paOn":281,"paOn2":109,"rispPa":153,"rbiRank":8,"convRank":34,"clutchRank":36,"robRank":9,"delta":-26},{"id":671277,"name":"Luis Garc\u00eda Jr.","team":"NYY","pos":"1B","g":129,"pa":476,"rbi":88,"hr":28,"avg":".286","ops":".869","di":60,"rob":307,"conv":19.5,"rob2":117,"di2":20,"clutch":17.1,"rbi2":28,"hr2":8,"paOn":222,"paOn2":81,"rispPa":120,"rbiRank":9,"convRank":2,"clutchRank":13,"robRank":35,"delta":7},{"id":700250,"name":"Ben Rice","team":"NYY","pos":"DH","g":133,"pa":572,"rbi":86,"hr":35,"avg":".252","ops":".865","di":51,"rob":297,"conv":17.2,"rob2":138,"di2":27,"clutch":19.6,"rbi2":34,"hr2":7,"paOn":211,"paOn2":92,"rispPa":121,"rbiRank":10,"convRank":14,"clutchRank":1,"robRank":39,"delta":-4},{"id":666176,"name":"Jo Adell","team":"CLE","pos":"RF","g":135,"pa":558,"rbi":83,"hr":20,"avg":".242","ops":".705","di":63,"rob":352,"conv":17.9,"rob2":143,"di2":25,"clutch":17.5,"rbi2":28,"hr2":3,"paOn":254,"paOn2":100,"rispPa":141,"rbiRank":11,"convRank":9,"clutchRank":12,"robRank":20,"delta":2},{"id":605137,"name":"Josh Bell","team":"MIN","pos":"DH","g":133,"pa":543,"rbi":83,"hr":17,"avg":".253","ops":".733","di":66,"rob":349,"conv":18.9,"rob2":137,"di2":26,"clutch":19.0,"rbi2":33,"hr2":7,"paOn":245,"paOn2":101,"rispPa":152,"rbiRank":12,"convRank":6,"clutchRank":3,"robRank":22,"delta":6},{"id":664040,"name":"Brandon Lowe","team":"PIT","pos":"2B","g":129,"pa":569,"rbi":83,"hr":29,"avg":".256","ops":".807","di":54,"rob":336,"conv":16.1,"rob2":136,"di2":23,"clutch":16.9,"rbi2":32,"hr2":9,"paOn":247,"paOn2":92,"rispPa":144,"rbiRank":13,"convRank":21,"clutchRank":14,"robRank":29,"delta":-8},{"id":656941,"name":"Kyle Schwarber","team":"PHI","pos":"DH","g":133,"pa":597,"rbi":83,"hr":40,"avg":".241","ops":".878","di":43,"rob":299,"conv":14.4,"rob2":123,"di2":13,"clutch":10.6,"rbi2":27,"hr2":14,"paOn":223,"paOn2":88,"rispPa":123,"rbiRank":14,"convRank":31,"clutchRank":38,"robRank":38,"delta":-17},{"id":646240,"name":"Rafael Devers","team":"SF","pos":"1B","g":139,"pa":593,"rbi":82,"hr":31,"avg":".252","ops":".826","di":51,"rob":378,"conv":13.5,"rob2":172,"di2":24,"clutch":14.0,"rbi2":35,"hr2":11,"paOn":275,"paOn2":134,"rispPa":151,"rbiRank":15,"convRank":35,"clutchRank":26,"robRank":11,"delta":-20},{"id":693307,"name":"Dillon Dingler","team":"DET","pos":"C","g":128,"pa":539,"rbi":82,"hr":26,"avg":".248","ops":".779","di":56,"rob":352,"conv":15.9,"rob2":153,"di2":28,"clutch":18.3,"rbi2":38,"hr2":10,"paOn":255,"paOn2":104,"rispPa":148,"rbiRank":16,"convRank":22,"clutchRank":7,"robRank":21,"delta":-6},{"id":547180,"name":"Bryce Harper","team":"PHI","pos":"1B","g":139,"pa":595,"rbi":80,"hr":27,"avg":".274","ops":".901","di":53,"rob":346,"conv":15.3,"rob2":109,"di2":14,"clutch":12.8,"rbi2":20,"hr2":6,"paOn":253,"paOn2":78,"rispPa":130,"rbiRank":17,"convRank":27,"clutchRank":32,"robRank":27,"delta":-10},{"id":671739,"name":"Michael Harris II","team":"ATL","pos":"CF","g":133,"pa":532,"rbi":80,"hr":24,"avg":".296","ops":".829","di":56,"rob":288,"conv":19.4,"rob2":136,"di2":20,"clutch":14.7,"rbi2":25,"hr2":5,"paOn":202,"paOn2":94,"rispPa":110,"rbiRank":18,"convRank":3,"clutchRank":23,"robRank":40,"delta":15},{"id":695734,"name":"Daylen Lile","team":"WSH","pos":"LF","g":139,"pa":578,"rbi":80,"hr":20,"avg":".255","ops":".750","di":60,"rob":390,"conv":15.4,"rob2":151,"di2":20,"clutch":13.2,"rbi2":21,"hr2":1,"paOn":281,"paOn2":111,"rispPa":177,"rbiRank":19,"convRank":25,"clutchRank":30,"robRank":5,"delta":-6},{"id":660271,"name":"Shohei Ohtani","team":"LAD","pos":"DH","g":132,"pa":586,"rbi":80,"hr":30,"avg":".281","ops":".911","di":50,"rob":303,"conv":16.5,"rob2":120,"di2":14,"clutch":11.7,"rbi2":17,"hr2":3,"paOn":219,"paOn2":86,"rispPa":132,"rbiRank":20,"convRank":20,"clutchRank":37,"robRank":37,"delta":0},{"id":621566,"name":"Matt Olson","team":"ATL","pos":"1B","g":139,"pa":604,"rbi":80,"hr":37,"avg":".256","ops":".854","di":43,"rob":358,"conv":12.0,"rob2":141,"di2":18,"clutch":12.8,"rbi2":32,"hr2":14,"paOn":256,"paOn2":96,"rispPa":140,"rbiRank":21,"convRank":40,"clutchRank":33,"robRank":16,"delta":-19},{"id":681624,"name":"Andy Pages","team":"LAD","pos":"CF","g":128,"pa":550,"rbi":80,"hr":21,"avg":".272","ops":".796","di":59,"rob":349,"conv":16.9,"rob2":136,"di2":21,"clutch":15.4,"rbi2":25,"hr2":4,"paOn":238,"paOn2":87,"rispPa":138,"rbiRank":22,"convRank":15,"clutchRank":21,"robRank":23,"delta":7},{"id":673548,"name":"Seiya Suzuki","team":"CHC","pos":"RF","g":121,"pa":537,"rbi":80,"hr":24,"avg":".276","ops":".863","di":56,"rob":380,"conv":14.7,"rob2":180,"di2":24,"clutch":13.3,"rbi2":27,"hr2":3,"paOn":251,"paOn2":109,"rispPa":161,"rbiRank":23,"convRank":29,"clutchRank":29,"robRank":8,"delta":-6},{"id":666018,"name":"Jonathan Aranda","team":"TB","pos":"1B","g":134,"pa":583,"rbi":79,"hr":17,"avg":".277","ops":".779","di":62,"rob":368,"conv":16.8,"rob2":137,"di2":18,"clutch":13.1,"rbi2":22,"hr2":4,"paOn":266,"paOn2":99,"rispPa":146,"rbiRank":24,"convRank":16,"clutchRank":31,"robRank":13,"delta":8},{"id":575929,"name":"Willson Contreras","team":"BOS","pos":"1B","g":125,"pa":517,"rbi":79,"hr":26,"avg":".274","ops":".900","di":53,"rob":320,"conv":16.6,"rob2":130,"di2":24,"clutch":18.5,"rbi2":34,"hr2":10,"paOn":236,"paOn2":103,"rispPa":146,"rbiRank":25,"convRank":18,"clutchRank":5,"robRank":33,"delta":7},{"id":695657,"name":"Colson Montgomery","team":"CWS","pos":"SS","g":130,"pa":550,"rbi":79,"hr":29,"avg":".216","ops":".734","di":50,"rob":389,"conv":12.9,"rob2":175,"di2":22,"clutch":12.6,"rbi2":32,"hr2":10,"paOn":266,"paOn2":123,"rispPa":167,"rbiRank":26,"convRank":38,"clutchRank":34,"robRank":6,"delta":-12},{"id":669394,"name":"Jake Burger","team":"TEX","pos":"1B","g":132,"pa":524,"rbi":78,"hr":23,"avg":".236","ops":".725","di":55,"rob":354,"conv":15.5,"rob2":162,"di2":20,"clutch":12.3,"rbi2":25,"hr2":5,"paOn":243,"paOn2":109,"rispPa":146,"rbiRank":27,"convRank":24,"clutchRank":35,"robRank":18,"delta":3},{"id":672960,"name":"Kazuma Okamoto","team":"TOR","pos":"3B","g":134,"pa":546,"rbi":78,"hr":28,"avg":".229","ops":".748","di":50,"rob":365,"conv":13.7,"rob2":151,"di2":16,"clutch":10.6,"rbi2":22,"hr2":6,"paOn":258,"paOn2":107,"rispPa":152,"rbiRank":28,"convRank":33,"clutchRank":39,"robRank":14,"delta":-5},{"id":668930,"name":"Brice Turang","team":"MIL","pos":"2B","g":128,"pa":583,"rbi":78,"hr":17,"avg":".254","ops":".774","di":61,"rob":365,"conv":16.7,"rob2":140,"di2":23,"clutch":16.4,"rbi2":27,"hr2":4,"paOn":264,"paOn2":93,"rispPa":156,"rbiRank":29,"convRank":17,"clutchRank":19,"robRank":15,"delta":12},{"id":664761,"name":"Alec Bohm","team":"PHI","pos":"3B","g":133,"pa":543,"rbi":77,"hr":14,"avg":".246","ops":".690","di":63,"rob":354,"conv":17.8,"rob2":151,"di2":27,"clutch":17.9,"rbi2":32,"hr2":5,"paOn":238,"paOn2":103,"rispPa":143,"rbiRank":30,"convRank":10,"clutchRank":8,"robRank":19,"delta":20},{"id":608324,"name":"Alex Bregman","team":"CHC","pos":"3B","g":136,"pa":624,"rbi":77,"hr":23,"avg":".258","ops":".783","di":54,"rob":430,"conv":12.6,"rob2":174,"di2":18,"clutch":10.3,"rbi2":25,"hr2":7,"paOn":310,"paOn2":124,"rispPa":178,"rbiRank":31,"convRank":39,"clutchRank":40,"robRank":1,"delta":-8},{"id":686797,"name":"Brooks Lee","team":"MIN","pos":"3B","g":133,"pa":534,"rbi":77,"hr":22,"avg":".246","ops":".730","di":55,"rob":332,"conv":16.6,"rob2":141,"di2":26,"clutch":18.4,"rbi2":33,"hr2":7,"paOn":227,"paOn2":95,"rispPa":133,"rbiRank":32,"convRank":19,"clutchRank":6,"robRank":30,"delta":13},{"id":641343,"name":"Jake Bauers","team":"MIL","pos":"1B","g":124,"pa":498,"rbi":76,"hr":23,"avg":".273","ops":".887","di":53,"rob":349,"conv":15.2,"rob2":163,"di2":22,"clutch":13.5,"rbi2":30,"hr2":8,"paOn":246,"paOn2":113,"rispPa":151,"rbiRank":33,"convRank":28,"clutchRank":28,"robRank":24,"delta":5},{"id":650490,"name":"Yandy D\u00edaz","team":"TB","pos":"DH","g":133,"pa":592,"rbi":76,"hr":21,"avg":".302","ops":".839","di":55,"rob":317,"conv":17.4,"rob2":130,"di2":22,"clutch":16.9,"rbi2":29,"hr2":7,"paOn":232,"paOn2":99,"rispPa":128,"rbiRank":34,"convRank":13,"clutchRank":15,"robRank":34,"delta":21},{"id":678246,"name":"Miguel Vargas","team":"CWS","pos":"3B","g":136,"pa":601,"rbi":76,"hr":29,"avg":".251","ops":".853","di":47,"rob":355,"conv":13.2,"rob2":118,"di2":17,"clutch":14.4,"rbi2":25,"hr2":8,"paOn":266,"paOn2":83,"rispPa":150,"rbiRank":35,"convRank":37,"clutchRank":25,"robRank":17,"delta":-2},{"id":572233,"name":"Christian Walker","team":"HOU","pos":"1B","g":134,"pa":550,"rbi":76,"hr":24,"avg":".227","ops":".729","di":52,"rob":389,"conv":13.4,"rob2":168,"di2":26,"clutch":15.5,"rbi2":34,"hr2":8,"paOn":266,"paOn2":116,"rispPa":155,"rbiRank":36,"convRank":36,"clutchRank":20,"robRank":7,"delta":0},{"id":689414,"name":"Liam Hicks","team":"TB","pos":"C","g":123,"pa":489,"rbi":75,"hr":17,"avg":".290","ops":".820","di":58,"rob":306,"conv":19.0,"rob2":132,"di2":25,"clutch":18.9,"rbi2":30,"hr2":5,"paOn":223,"paOn2":94,"rispPa":135,"rbiRank":37,"convRank":5,"clutchRank":4,"robRank":36,"delta":32},{"id":592518,"name":"Manny Machado","team":"SD","pos":"3B","g":136,"pa":582,"rbi":75,"hr":24,"avg":".219","ops":".709","di":51,"rob":347,"conv":14.7,"rob2":124,"di2":18,"clutch":14.5,"rbi2":27,"hr2":9,"paOn":262,"paOn2":98,"rispPa":143,"rbiRank":38,"convRank":30,"clutchRank":24,"robRank":25,"delta":8},{"id":677649,"name":"Ezequiel Duran","team":"TEX","pos":"SS","g":130,"pa":503,"rbi":74,"hr":15,"avg":".272","ops":".779","di":59,"rob":323,"conv":18.3,"rob2":125,"di2":17,"clutch":13.6,"rbi2":22,"hr2":5,"paOn":212,"paOn2":80,"rispPa":133,"rbiRank":39,"convRank":8,"clutchRank":27,"robRank":32,"delta":31},{"id":670623,"name":"Isaac Paredes","team":"HOU","pos":"3B","g":132,"pa":561,"rbi":74,"hr":18,"avg":".256","ops":".776","di":56,"rob":394,"conv":14.2,"rob2":168,"di2":28,"clutch":16.7,"rbi2":36,"hr2":8,"paOn":278,"paOn2":109,"rispPa":159,"rbiRank":40,"convRank":32,"clutchRank":17,"robRank":4,"delta":8}]};</script>
+<script>
+const D = window.__RBI__;
+const P = D.players, M = D.meta;
+const $ = s => document.querySelector(s);
+const el = (t, c, h) => { const n = document.createElement(t); if (c) n.className = c; if (h !== undefined) n.innerHTML = h; return n; };
+
+/* ---------- tiles ---------- */
+const spread = P.slice().sort((a,b)=>b.rob-a.rob);
+const most = spread[0], least = spread[spread.length-1];
+const bestConv = P.slice().sort((a,b)=>b.conv-a.conv)[0];
+const bestCl = P.slice().sort((a,b)=>b.clutch-a.clutch)[0];
+const mover = P.slice().sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta))[0];
+$('#tiles').innerHTML = [
+  ['Opportunity spread', most.rob + ' vs ' + least.rob,
+   most.name + ' batted with ' + (most.rob - least.rob) + ' more runners on base than ' + least.name + ' — a ' + Math.round((most.rob/least.rob-1)*100) + '% head start.'],
+  ['40-man drive-in rate', M.avgConv + '%',
+   'Roughly one in six runners on base gets driven home by these hitters.'],
+  ['Best drive-in rate', bestConv.conv + '%',
+   bestConv.name + ' (' + bestConv.team + ') — ' + bestConv.di + ' runners home out of ' + bestConv.rob + '.'],
+  ['Biggest re-rank', (mover.delta > 0 ? '+' : '') + mover.delta,
+   mover.name + ' moves from #' + mover.rbiRank + ' in RBI to #' + mover.convRank + ' by rate.']
+].map(([k,v,s]) => '<div class="tile"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="s">'+s+'</div></div>').join('');
+$('#stamp').textContent = 'Built ' + M.updated + ' · ' + M.n + ' hitters · ' + P.reduce((a,p)=>a+p.pa,0).toLocaleString() + ' plate appearances scored';
+
+/* ---------- paired boards ---------- */
+function board(node, key, fmt, sub, avg) {
+  const rows = P.slice().sort((a,b)=>b[key]-a[key]);
+  const max = rows[0][key];
+  node.innerHTML = '';
+  rows.forEach((p,i) => {
+    const r = el('div','rwb');
+    const d = p.delta;
+    const chip = key === 'conv'
+      ? '<span class="mv '+(d>0?'up':d<0?'dn':'eq')+'">'+(d>0?'▲ '+d:d<0?'▼ '+(-d):'—')+'</span>'
+      : '';
+    r.innerHTML =
+      '<span class="rk num">'+(i+1)+'</span>'+
+      '<span class="who"><span class="nm">'+p.name+'</span><span class="tm">'+p.team+'</span>'+chip+'</span>'+
+      '<span class="val num">'+fmt(p)+'</span>';
+    const line = el('div','line2');
+    const track = el('div');
+    track.style.cssText = 'position:relative;flex:1;height:6px;background:var(--rule-soft);border-radius:0 3px 3px 0';
+    const bar = el('div', key === 'conv' ? 'bar' : 'bar grey');
+    bar.style.cssText = 'position:absolute;left:0;top:0;height:6px;width:'+(p[key]/max*100)+'%';
+    track.appendChild(bar);
+    if (avg != null) {
+      const a = el('div','avgline');
+      a.style.left = (avg/max*100)+'%';
+      track.appendChild(a);
+    }
+    line.appendChild(track);
+    line.appendChild(el('span','tm', sub(p)));
+    r.appendChild(line);
+    node.appendChild(r);
+  });
+}
+board($('#boardRbi'), 'rbi', p => p.rbi, p => p.rob + ' on base', null);
+board($('#boardConv'), 'conv', p => p.conv.toFixed(1) + '%', p => p.di + '/' + p.rob, M.avgConv);
+
+/* ---------- scatter ---------- */
+(function(){
+  const W = 900, H = 480, m = {t:14, r:22, b:48, l:56};
+  const xs = P.map(p=>p.rob), ys = P.map(p=>p.di);
+  const x0 = Math.floor(Math.min(...xs)/20)*20 - 10, x1 = Math.ceil(Math.max(...xs)/20)*20 + 10;
+  const y0 = Math.floor(Math.min(...ys)/10)*10 - 5, y1 = Math.ceil(Math.max(...ys)/10)*10 + 5;
+  const X = v => m.l + (v-x0)/(x1-x0)*(W-m.l-m.r);
+  const Y = v => H-m.b - (v-y0)/(y1-y0)*(H-m.t-m.b);
+  const rate = M.avgConv/100;
+  let s = '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Runners driven in versus runners on base, 40 hitters">';
+  // grid
+  const xt = [], yt = [];
+  for (let v = Math.ceil(x0/25)*25; v <= x1; v += 25) xt.push(v);
+  for (let v = Math.ceil(y0/10)*10; v <= y1; v += 10) yt.push(v);
+  yt.forEach(v => s += '<line x1="'+m.l+'" y1="'+Y(v)+'" x2="'+(W-m.r)+'" y2="'+Y(v)+'" stroke="var(--rule-soft)" stroke-width="1"/>');
+  xt.forEach(v => s += '<line x1="'+X(v)+'" y1="'+m.t+'" x2="'+X(v)+'" y2="'+(H-m.b)+'" stroke="var(--rule-soft)" stroke-width="1"/>');
+  // expectancy line
+  const lx0 = x0, lx1 = x1;
+  s += '<line x1="'+X(lx0)+'" y1="'+Y(lx0*rate)+'" x2="'+X(lx1)+'" y2="'+Y(lx1*rate)+'" stroke="var(--warn)" stroke-width="2" stroke-dasharray="7 5" opacity="0.75"/>';
+  s += '<text x="'+(X(lx1)-6)+'" y="'+(Y(lx1*rate)-10)+'" text-anchor="end" font-size="11" fill="var(--warn)">expected at '+M.avgConv+'%</text>';
+  // axes
+  s += '<line x1="'+m.l+'" y1="'+(H-m.b)+'" x2="'+(W-m.r)+'" y2="'+(H-m.b)+'" stroke="var(--rule)" stroke-width="1"/>';
+  s += '<line x1="'+m.l+'" y1="'+m.t+'" x2="'+m.l+'" y2="'+(H-m.b)+'" stroke="var(--rule)" stroke-width="1"/>';
+  xt.forEach(v => s += '<text x="'+X(v)+'" y="'+(H-m.b+18)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+v+'</text>');
+  yt.forEach(v => s += '<text x="'+(m.l-9)+'" y="'+(Y(v)+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+v+'</text>');
+  s += '<text x="'+((m.l+W-m.r)/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="11" letter-spacing="1.4" fill="var(--muted)">RUNNERS ON BASE WHEN HE BATTED</text>';
+  s += '<text transform="translate(15,'+((m.t+H-m.b)/2)+') rotate(-90)" text-anchor="middle" font-size="11" letter-spacing="1.4" fill="var(--muted)">RUNNERS DRIVEN IN</text>';
+  // points
+  P.forEach(p => {
+    const above = p.conv >= M.avgConv;
+    s += '<circle class="pt" data-i="'+P.indexOf(p)+'" cx="'+X(p.rob)+'" cy="'+Y(p.di)+'" r="6.5" fill="'+(above?'var(--accent-mark)':'var(--muted)')+'" stroke="var(--card)" stroke-width="2" opacity="'+(above?1:0.8)+'"/>';
+  });
+  // direct labels on the extremes
+  const label = new Set([bestConv.id, most.id, least.id, P.slice().sort((a,b)=>a.conv-b.conv)[0].id, P.slice().sort((a,b)=>b.rbi-a.rbi)[0].id]);
+  P.filter(p=>label.has(p.id)).forEach(p => {
+    const right = X(p.rob) < W*0.72;
+    s += '<text x="'+(X(p.rob)+(right?11:-11))+'" y="'+(Y(p.di)+4)+'" text-anchor="'+(right?'start':'end')+'" font-size="11.5" fill="var(--ink)">'+p.name+'</text>';
+  });
+  s += '</svg>';
+  $('#scatter').innerHTML = s;
+  const tip = $('#tip'), box = $('#scatter').parentElement;
+  $('#scatter').querySelectorAll('.pt').forEach(c => {
+    c.style.cursor = 'pointer';
+    c.addEventListener('mouseenter', e => {
+      const p = P[+c.dataset.i];
+      tip.innerHTML = '<b>'+p.name+'</b> · '+p.team+'<br>'+p.di+' driven in / '+p.rob+' on base<br>Rate '+p.conv.toFixed(1)+'%  ·  RBI '+p.rbi+' (#'+p.rbiRank+')<br>Two-out rate '+p.clutch.toFixed(1)+'%';
+      tip.style.opacity = 1;
+      const r = box.getBoundingClientRect(), b = c.getBoundingClientRect();
+      let left = b.left - r.left + 14;
+      tip.style.left = '0px'; tip.style.top = '0px';
+      const tw = tip.offsetWidth;
+      if (left + tw > r.width - 8) left = b.left - r.left - tw - 14;
+      tip.style.left = Math.max(6, left) + 'px';
+      tip.style.top = (b.top - r.top - 10) + 'px';
+    });
+    c.addEventListener('mouseleave', () => tip.style.opacity = 0);
+  });
+})();
+
+/* ---------- clutch ---------- */
+(function(){
+  const rows = P.slice().sort((a,b)=>b.clutch-a.clutch).slice(0,15);
+  const max = Math.max(...P.map(p=>Math.max(p.clutch,p.conv))) * 1.06;
+  const node = $('#clutch');
+  rows.forEach((p,i) => {
+    const r = el('div','cl');
+    r.innerHTML =
+      '<span class="rk num">'+(i+1)+'</span>'+
+      '<span class="who"><span class="nm">'+p.name+'</span> <span class="tm">'+p.team+'</span></span>'+
+      '<span class="track"><span class="cbar" style="width:'+(p.clutch/max*100)+'%"></span>'+
+      '<span class="avgtick" style="left:'+(M.avgClutch/max*100)+'%"></span>'+
+      '<span class="dot" style="left:'+(p.conv/max*100)+'%" title="all-situations rate"></span></span>'+
+      '<span class="val num">'+p.clutch.toFixed(1)+'%</span>';
+    node.appendChild(r);
+  });
+})();
+
+/* ---------- table ---------- */
+(function(){
+  const cols = [
+    ['#','rbiRank',0,''], ['Player','name',0,''], ['Tm','team',0,''], ['G','g',0,''], ['PA','pa',0,''],
+    ['RBI','rbi',1,'thsplit'], ['HR','hr',1,''], ['DI','di',1,''], ['ROB','rob',1,''], ['DI%','conv',1,'key'],
+    ['2-out ROB','rob2',1,'thsplit'], ['2-out DI','di2',1,''], ['CL%','clutch',1,'key'],
+    ['RISP PA','rispPa',1,'thsplit'], ['AVG','avg',0,''], ['OPS','ops',0,'']
+  ];
+  $('#thead').innerHTML = cols.map(c => '<th data-k="'+c[1]+'" class="'+(c[3]==='thsplit'?'thsplit':'')+'">'+c[0]+'</th>').join('');
+  let sortKey = 'conv', desc = true;
+  function draw() {
+    const rows = P.slice().sort((a,b) => {
+      const x = a[sortKey], y = b[sortKey];
+      const v = (typeof x === 'string') ? x.localeCompare(y) : (parseFloat(x) - parseFloat(y));
+      return desc ? -v : v;
+    });
+    $('#tbody').innerHTML = rows.map((p,i) => '<tr>' + cols.map(c => {
+      let v = p[c[1]];
+      if (c[1] === 'rbiRank') v = i + 1;
+      if (c[1] === 'conv' || c[1] === 'clutch') v = v.toFixed(1) + '%';
+      const key = c[3] === 'key';
+      const ref = c[1] === 'conv' ? M.avgConv : M.avgClutch;
+      const cls = [c[3] === 'thsplit' ? 'thsplit' : '', key ? (p[c[1]] >= ref ? 'hi' : 'lo') : ''].filter(Boolean).join(' ');
+      return '<td class="'+cls+'">'+v+'</td>';
+    }).join('') + '</tr>').join('');
+    document.querySelectorAll('#thead th').forEach(th => th.classList.toggle('on', th.dataset.k === sortKey));
+  }
+  document.querySelectorAll('#thead th').forEach(th => {
+    th.tabIndex = 0;
+    const go = () => { const k = th.dataset.k; if (k === sortKey) desc = !desc; else { sortKey = k; desc = k !== 'name' && k !== 'team'; } draw(); };
+    th.addEventListener('click', go);
+    th.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+  draw();
+})();
+</script>
+</body>
+</html>
