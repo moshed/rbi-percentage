@@ -15,8 +15,15 @@ home runs.** An earlier version used `(RBI - HR) / all runners on base` and Mosh
 rejected it on 2026-09-02 — an RBI that scores a man from first is still an RBI, and a
 solo homer is still a run he drove in.
 
-`LI` is the MLB leverage index of that plate appearance. Weighting by it is Moshe's
-replacement for the earlier two-out clutch definition.
+`LI` is the MLB leverage index of that plate appearance — **applied per plate
+appearance, never as a season average.** Weighting by it is Moshe's replacement for the
+earlier two-out clutch definition. An average-LI column was shown briefly and removed on
+2026-09-02: it read as though CL% multiplied by a single average. Do not add it back.
+
+Column headings are centered over their column. The sort arrow and the `?` are both
+absolutely positioned inside the heading cell so neither shifts the label. The `?` is
+touch-only (`@media (pointer:coarse)`) — on a pointer the hover tooltip covers it. The
+tooltip opens **above** the heading so it never sits on top of the numbers.
 
 ## Shape of the page
 **One sortable table, nothing else.** Moshe asked for exactly this on 2026-09-02 after a

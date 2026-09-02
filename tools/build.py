@@ -180,7 +180,6 @@ def main():
     for r in rows:
         r['pct'] = round(r['rbi'] / r['risp'] * 100, 1) if r['risp'] else 0.0
         r['pct2'] = round(r['wRbi'] / r['wRisp'] * 100, 1) if r['wRisp'] else 0.0
-        r['li'] = round(r['liSum'] / r['liPa'], 2) if r['liPa'] else 0.0
 
     qual = [r for r in rows if r['q']]
     meta = dict(season=s, updated=str(datetime.date.today()), n=len(rows), qual=len(qual),
