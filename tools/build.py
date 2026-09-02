@@ -21,9 +21,11 @@ import argparse, collections, concurrent.futures, datetime, json, os, re, urllib
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 API = "https://statsapi.mlb.com/api/v1"
 
-# Runners in scoring position for each base state. A man on first is worth nothing
-# here; second and third together are worth two.
-RISP_BY_STATE = {'r2': 1, 'r3': 1, 'r12': 1, 'r13': 1, 'r23': 2, 'r123': 2}
+WP_FIELDS = "fields=atBatIndex,leverageIndex,result,rbi,eventType,matchup,batter,id"
+
+# A walk or a hit-by-pitch is not a chance he wasted — he was never given a pitch to
+# drive. It only counts when it forced a run in, and then it counts on both sides.
+FREE_PASS = {'walk', 'intent_walk', 'hit_by_pitch'}
 
 TEAM_ABBR = {'Arizona Diamondbacks':'ARI','Atlanta Braves':'ATL','Baltimore Orioles':'BAL',
  'Boston Red Sox':'BOS','Chicago Cubs':'CHC','Chicago White Sox':'CWS','Cincinnati Reds':'CIN',
@@ -86,18 +88,6 @@ def season_rows(s, tg):
     return players
 
 
-def add_risp(players, s):
-    """Season RISP totals: one league-wide call per base state, not one per player."""
-    for code, n in RISP_BY_STATE.items():
-        for sp in paged(f"stats=statSplits&sitCodes={code}&group=hitting"
-                        f"&season={s}&sportId=1&gameType=R&playerPool=All"):
-            p = players.get(sp['player']['id'])
-            if p:
-                pa = sp['stat'].get('plateAppearances') or 0
-                p['risp'] += pa * n
-                p['rispPa'] += pa
-
-
 def risp_per_pa(players, s):
     """(gamePk, atBatIndex) -> runners in scoring position, from each hitter's play log.
 
@@ -133,10 +123,8 @@ def risp_per_pa(players, s):
 
 def add_leverage(players, risp, games):
     """Weight every plate appearance by the leverage index of that moment."""
-    fields = "fields=atBatIndex,leverageIndex,result,rbi,matchup,batter,id"
-
     def one(pk):
-        return pk, get(f"{API}/game/{pk}/winProbability?{fields}")
+        return pk, get(f"{API}/game/{pk}/winProbability?{WP_FIELDS}")
 
     done = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
@@ -149,9 +137,14 @@ def add_leverage(players, risp, games):
                 p = players.get(play.get('matchup', {}).get('batter', {}).get('id'))
                 if not p:
                     continue
+                res = play.get('result', {})
+                rbi = res.get('rbi') or 0
+                if res.get('eventType') in FREE_PASS and rbi == 0:
+                    continue                      # no pitch to drive, no chance charged
                 li = play.get('leverageIndex')
                 li = 1.0 if li is None else float(li)
-                p['wRbi'] += (play.get('result', {}).get('rbi') or 0) * li
+                p['risp'] += n
+                p['wRbi'] += rbi * li
                 p['wRisp'] += n * li
                 p['liSum'] += li
                 p['liPa'] += 1
@@ -175,8 +168,6 @@ def main():
     tg = team_games(s)
     players = season_rows(s, tg)
     print(f"{len(players)} hitters, {sum(p['q'] for p in players.values())} qualified")
-    add_risp(players, s)
-    print("season RISP done")
     risp, games = risp_per_pa(players, s)
     print(f"{len(risp)} plate appearances across {len(games)} games")
     add_leverage(players, risp, games)

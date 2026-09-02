@@ -9,6 +9,13 @@ chances. Two rates, both from real per-plate-appearance data:
 - **RBI%** = `RBI / RISP`
 - **CL%** = `sum(RBI x LI) / sum(RISP x LI)`
 
+**A walk or hit-by-pitch is not a chance.** `FREE_PASS = {walk, intent_walk,
+hit_by_pitch}`: when one of those ends a plate appearance and drives in **no** run, its
+runners are dropped from the denominator. When it forces a run in (bases loaded) it counts
+on both sides — Moshe's own catch, 2026-09-02, and the reason the rule is written on RBI
+rather than on the event alone. Drop all walks and a bases-loaded walk would put an RBI on
+top with no chance underneath.
+
 `RISP` counts runners in scoring position one at a time — second and third is two, a man
 on first is none. Every RBI stays in the numerator, home runs included: **do not subtract
 home runs.** An earlier version used `(RBI - HR) / all runners on base` and Moshe

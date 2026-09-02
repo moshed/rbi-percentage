@@ -9,7 +9,7 @@
 //   GET /rbipct-refresh?date=2026-09-01
 
 const API = 'https://statsapi.mlb.com/api/v1'
-const WP_FIELDS = 'fields=atBatIndex,leverageIndex,result,rbi,matchup,batter,id'
+const WP_FIELDS = 'fields=atBatIndex,leverageIndex,result,rbi,eventType,matchup,batter,id'
 const SB = Deno.env.get('SUPABASE_URL')!
 const KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }
@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
         rows.push({
           season, game_pk: pk, ab_index: p.atBatIndex, game_date: gameDate[pk],
           batter_id: bid, risp: risp.get(key), rbi: p.result?.rbi ?? 0,
-          li: p.leverageIndex ?? 1.0,
+          event: p.result?.eventType ?? null, li: p.leverageIndex ?? 1.0,
         })
       }
     })

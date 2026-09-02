@@ -8,12 +8,11 @@ The daily job only adds new games. Run this once per season, or to repair.
 import argparse, concurrent.futures, datetime, json, os, sys, urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from build import get, paged, leaders_pool, TEAM_ABBR, API   # noqa: E402
+from build import get, paged, leaders_pool, TEAM_ABBR, API, WP_FIELDS   # noqa: E402
 
 REF = 'atqhfbaurrmivjarowco'
 REST = f"https://{REF}.supabase.co/rest/v1"
 KEY = os.environ.get('SUPABASE_SERVICE_KEY') or sys.exit('set SUPABASE_SERVICE_KEY')
-WP_FIELDS = "fields=atBatIndex,leverageIndex,result,rbi,matchup,batter,id"
 
 
 def post(table, rows, on_conflict):
@@ -88,6 +87,7 @@ def main():
                 out.append(dict(season=s, game_pk=pk, ab_index=idx, game_date=dates[pk],
                                 batter_id=bid, risp=n,
                                 rbi=play.get('result', {}).get('rbi') or 0,
+                                event=play.get('result', {}).get('eventType'),
                                 li=1.0 if li is None else float(li)))
             done += 1
             if done % 400 == 0:
