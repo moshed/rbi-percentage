@@ -76,11 +76,27 @@ td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--rule-soft);wh
 tr:nth-child(even) td{background:var(--band)}
 tr:hover td{background:var(--accent-soft)}
 td:first-child{text-align:left;color:var(--muted);font-size:12px}
-td.nm{text-align:left;font-family:var(--sans);font-weight:700;font-size:14.5px;
-  letter-spacing:-.005em;padding-top:3px;padding-bottom:3px}
-td.nm span{display:flex;align-items:center;gap:10px}
+/* The rank, the photo and the name stay put while the stats scroll under them.
+   The name wraps to two smaller lines inside a fixed-height box, so freezing it
+   never changes the row height. */
+:root{--wrank:36px;--wname:186px}
+th:first-child,td:first-child{position:sticky;left:0;z-index:3;
+  width:var(--wrank);min-width:var(--wrank);max-width:var(--wrank)}
+th:nth-child(2),td.nm{position:sticky;left:var(--wrank);z-index:3;
+  width:var(--wname);min-width:var(--wname);max-width:var(--wname);
+  box-shadow:1px 0 0 var(--rule)}
+th:first-child,th:nth-child(2){z-index:4}
+td:first-child,td.nm{background:var(--card)}
+tr:nth-child(even) td:first-child,tr:nth-child(even) td.nm{background:var(--band)}
+tr:hover td:first-child,tr:hover td.nm{background:var(--accent-soft)}
+
+td.nm{text-align:left;font-family:var(--sans);letter-spacing:-.005em;
+  white-space:normal;padding:3px 9px}
+td.nm span{display:flex;align-items:center;gap:9px;height:32px}
 td.nm img{width:30px;height:30px;flex:none;border-radius:50%;object-fit:cover;
   background:var(--chip);border:1.5px solid var(--rule-soft)}
+td.nm .pn{font-style:normal;font-weight:700;font-size:12.5px;line-height:1.16;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 td.tm{font-family:var(--sans);font-weight:700;font-size:12px;letter-spacing:.04em;color:var(--ink-2)}
 td.key{font-weight:600}
 td.hi{color:var(--accent)}
@@ -112,7 +128,10 @@ footer a:hover{text-decoration:underline}
   body{overflow:visible}
   .wrap{height:auto;display:block;padding-bottom:44px}
   .scroll{max-height:none}
+  :root{--wrank:30px;--wname:158px}
   th{position:static}
+  th:first-child{position:sticky;left:0}
+  th:nth-child(2){position:sticky;left:var(--wrank)}
   h1{font-size:26px}
   input[type=search]{width:100%}
   .count{margin-left:0;width:100%}
@@ -237,7 +256,7 @@ function draw() {
       const k = c[1];
       if (k === '_i') return '<td>' + (i + 1) + '</td>';
       if (k === 'n') return '<td class="nm"><span><img loading="lazy" alt="" src="' + shot(p.id) +
-        '" onerror="this.style.visibility=\'hidden\'">' + p.n + '</span></td>';
+        '" onerror="this.style.visibility=\'hidden\'"><i class="pn">' + p.n + '</i></span></td>';
       let v = p[k], cls = c[2] === 'split' ? 'split' : (c[2] === 'tm' ? 'tm' : '');
       if (k === '_d') {
         cls += ' key ' + (v > 0 ? 'hi' : v < 0 ? 'lo' : '');

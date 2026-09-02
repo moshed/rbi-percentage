@@ -40,6 +40,13 @@ The Min PA control defaults to **Qualifying**: MLB's own rule, 3.1 plate appeara
 team game. `build.py` reads each team's `gamesPlayed` from `/api/v1/standings` and stamps
 a `q` flag on every player, so the cutoff moves with the season instead of being a guess.
 
+The rank, headshot and name are frozen (`position: sticky; left`) so they survive a
+sideways scroll. Their `left` offsets come from `--wrank` / `--wname` on `:root` — change
+a column width there, not on the cells, or the two get out of step. Frozen cells must
+carry their own background (plain, banded and hover), otherwise scrolled content shows
+through them. The name sits in an `.pn` box clamped to two lines inside a fixed 32px
+flex row, so a long name wraps instead of changing the row height.
+
 Desktop layout is pinned: `body` does not scroll, the table does, so the column headings
 stay visible. Under 820px it falls back to normal page flow with a static heading row.
 
