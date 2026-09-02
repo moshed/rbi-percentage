@@ -1,0 +1,30 @@
+name: Deploy
+
+# Cloudflare Pages is on direct upload, not the Git integration (that needs a
+# browser OAuth click). This keeps it in step with the repo anyway.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage the site
+        run: |
+          mkdir -p dist
+          cp index.html dist/
+          printf '/*\n  Cache-Control: public, max-age=0, must-revalidate\n' > dist/_headers
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name rbi-percentage --branch main
