@@ -7,6 +7,11 @@ Moved off GitHub Pages 2026-09-02. GitHub pinned `Cache-Control: max-age=600` wi
 purge, so an edit could take ten minutes to appear. Cloudflare serves
 `max-age=0, must-revalidate` (set in `dist/_headers`) and deploys in seconds.
 
+**To publish an edit, run `./deploy.sh` — about 7 seconds, no GitHub in the path.**
+Push to git separately, for history. The push-triggered workflow is a backstop for
+commits that land from somewhere else (the weekly snapshot job runs on GitHub's
+machines, so it needs one).
+
 It is **direct upload, not the Git integration** — connecting Pages to GitHub is a
 browser OAuth flow only Moshe can click. `.github/workflows/deploy.yml` runs
 `wrangler pages deploy dist` on every push instead, which keeps it in step without the
