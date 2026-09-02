@@ -47,6 +47,12 @@ carry their own background (plain, banded and hover), otherwise scrolled content
 through them. The name sits in a `.pn` box clamped to two lines inside a fixed 32px
 flex row, so it never changes the row height.
 
+`fitName()` measures the widest name currently on screen with a canvas and writes
+`--wname` on the container, so the frozen block reserves no space nothing uses. It has to
+be measured rather than read off the cell: the cell's width is fixed, so it can never
+report its natural one. It re-runs on every draw, on the scroll-state flip, and once
+`document.fonts.ready` resolves.
+
 A `scroll` handler puts `.narrow` on the container as soon as `scrollLeft > 4`. That one
 class drops the name to 11.5px, breaks it first-name-over-last (`.pn em{display:block}`)
 and shrinks `--wname` to 140px, so more of the table fits while you are reading across.
