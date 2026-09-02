@@ -24,7 +24,17 @@ first version that had a hero, a scatter plot and prose sections — do not add 
 tiles or essays back unless he asks. Controls are a search box and a Min PA selector
 (defaults to 100; the rate column is meaningless on a 12-PA sample).
 
-Every hitter with a plate appearance is included — about 650, all rendered at once.
+Every hitter with a plate appearance is included — about 650, all rendered at once, each
+with an MLB headshot beside the name
+(`img.mlbstatic.com/.../w_64,q_auto:best/v1/people/{id}/headshot/67/current`, lazy-loaded,
+hidden on error).
+
+The Min PA control defaults to **Qualifying**: MLB's own rule, 3.1 plate appearances per
+team game. `build.py` reads each team's `gamesPlayed` from `/api/v1/standings` and stamps
+a `q` flag on every player, so the cutoff moves with the season instead of being a guess.
+
+Desktop layout is pinned: `body` does not scroll, the table does, so the column headings
+stay visible. Under 820px it falls back to normal page flow with a static heading row.
 
 ## Design
 Greenbar-ledger look: paper ground, banded rows, IBM Plex Mono throughout,

@@ -59,18 +59,28 @@ def paged(params):
             return out
 
 
-def season_rows(s):
+def team_games(s):
+    """Games played per team, for the 3.1-PA-per-team-game qualifier."""
+    d = get(f"{API}/standings?leagueId=103,104&season={s}&standingsTypes=regularSeason")
+    return {t['team']['id']: t.get('gamesPlayed') or 0
+            for rec in d['records'] for t in rec['teamRecords']}
+
+
+def season_rows(s, tg):
     players = {}
     for sp in paged(f"stats=season&group=hitting&season={s}&sportId=1&gameType=R&playerPool=All"):
         st, p = sp['stat'], sp['player']
         if not st.get('plateAppearances'):
             continue
+        # MLB's batting qualifier: 3.1 plate appearances per team game.
+        games = tg.get(sp.get('team', {}).get('id'), max(tg.values()) if tg else 0)
         players[p['id']] = dict(
             id=p['id'], n=p['fullName'],
             t=TEAM_ABBR.get(sp.get('team', {}).get('name', ''), '---'),
             g=st.get('gamesPlayed', 0), pa=st['plateAppearances'],
             rbi=st.get('rbi', 0), hr=st.get('homeRuns', 0),
             avg=st.get('avg', '.000'), ops=st.get('ops', '.000'),
+            q=1 if st['plateAppearances'] >= 3.1 * games else 0,
             risp=0, rispPa=0, wRbi=0.0, wRisp=0.0, liSum=0.0, liPa=0)
     return players
 
@@ -155,8 +165,9 @@ def main():
     args = ap.parse_args()
     s = args.season
 
-    players = season_rows(s)
-    print(f"{len(players)} hitters")
+    tg = team_games(s)
+    players = season_rows(s, tg)
+    print(f"{len(players)} hitters, {sum(p['q'] for p in players.values())} qualified")
     add_risp(players, s)
     print("season RISP done")
     risp, games = risp_per_pa(players, s)
@@ -170,8 +181,9 @@ def main():
         r['pct2'] = round(r['wRbi'] / r['wRisp'] * 100, 1) if r['wRisp'] else 0.0
         r['li'] = round(r['liSum'] / r['liPa'], 2) if r['liPa'] else 0.0
 
-    qual = [r for r in rows if r['pa'] >= 300]
+    qual = [r for r in rows if r['q']]
     meta = dict(season=s, updated=str(datetime.date.today()), n=len(rows), qual=len(qual),
+                qualPa=round(3.1 * max(tg.values())) if tg else 0,
                 avg=round(sum(r['rbi'] for r in qual) / sum(r['risp'] for r in qual) * 100, 1),
                 avg2=round(sum(r['wRbi'] for r in qual) / sum(r['wRisp'] for r in qual) * 100, 1))
     for r in rows:
