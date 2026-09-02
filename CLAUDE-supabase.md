@@ -57,6 +57,16 @@ curl -H "Authorization: Bearer $ANON" \
 `?days=N` forces the last N days; `?date=YYYY-MM-DD` does one day. Both are idempotent —
 the upsert is keyed on `(game_pk, ab_index)`.
 
+## After adding a column
+PostgREST caches the schema. A fresh column returns `PGRST204 Could not find the '<name>'
+column` on write until you nudge it:
+
+```sql
+notify pgrst, 'reload schema';
+```
+
+Run that right after the `ALTER TABLE`, then re-run the edge function.
+
 ## Backfill
 
 `tools/backfill.py` loads a whole season in one go (~3 minutes). Run it once per season:
