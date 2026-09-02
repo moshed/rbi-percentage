@@ -23,8 +23,9 @@ API = "https://statsapi.mlb.com/api/v1"
 
 WP_FIELDS = "fields=atBatIndex,leverageIndex,result,rbi,eventType,matchup,batter,id"
 
-# A walk or a hit-by-pitch is not a chance he wasted — he was never given a pitch to
-# drive. It only counts when it forced a run in, and then it counts on both sides.
+# A walk, intentional walk or hit-by-pitch is not a chance he wasted — he was never
+# given a pitch to drive. The toggle drops those trips from BOTH sides: the forced-in
+# run leaves the numerator along with the runners it was forced from.
 FREE_PASS = {'walk', 'intent_walk', 'hit_by_pitch'}
 
 TEAM_ABBR = {'Arizona Diamondbacks':'ARI','Atlanta Braves':'ATL','Baltimore Orioles':'BAL',
@@ -87,7 +88,8 @@ def season_rows(s, tg):
             avg=st.get('avg', '.000'), obp=st.get('obp', '.000'),
             slg=st.get('slg', '.000'), ops=st.get('ops', '.000'),
             q=1 if st['plateAppearances'] >= 3.1 * games else 0,
-            risp=0, rispx=0, wRbi=0.0, wRisp=0.0, wRispx=0.0, liSum=0.0, liPa=0)
+            risp=0, rispx=0, rbiFree=0, wRbi=0.0, wRbix=0.0,
+            wRisp=0.0, wRispx=0.0, liSum=0.0, liPa=0)
     return players
 
 
@@ -142,16 +144,17 @@ def add_leverage(players, risp, games):
                     continue
                 res = play.get('result', {})
                 rbi = res.get('rbi') or 0
-                # A walk or hit-by-pitch that drove nobody in is only dropped from the
-                # second denominator; the page toggles between the two.
-                free = res.get('eventType') in FREE_PASS and rbi == 0
+                free = res.get('eventType') in FREE_PASS
                 li = play.get('leverageIndex')
                 li = 1.0 if li is None else float(li)
                 p['risp'] += n
                 p['wRbi'] += rbi * li
                 p['wRisp'] += n * li
-                if not free:
+                if free:
+                    p['rbiFree'] += rbi
+                else:
                     p['rispx'] += n
+                    p['wRbix'] += rbi * li
                     p['wRispx'] += n * li
                 p['liSum'] += li
                 p['liPa'] += 1
@@ -183,9 +186,9 @@ def main():
     rows = sorted(players.values(), key=lambda r: -r['rbi'])
     for r in rows:
         r['pct'] = round(r['rbi'] / r['risp'] * 100, 1) if r['risp'] else 0.0
-        r['pctx'] = round(r['rbi'] / r['rispx'] * 100, 1) if r['rispx'] else 0.0
+        r['pctx'] = round((r['rbi'] - r['rbiFree']) / r['rispx'] * 100, 1) if r['rispx'] else 0.0
         r['pct2'] = round(r['wRbi'] / r['wRisp'] * 100, 1) if r['wRisp'] else 0.0
-        r['pct2x'] = round(r['wRbi'] / r['wRispx'] * 100, 1) if r['wRispx'] else 0.0
+        r['pct2x'] = round(r['wRbix'] / r['wRispx'] * 100, 1) if r['wRispx'] else 0.0
 
     qual = [r for r in rows if r['q']]
     # Out of season the leaderboard is empty or nobody has qualified yet. Leave the
@@ -197,11 +200,12 @@ def main():
     meta = dict(season=s, updated=str(datetime.date.today()), n=len(rows), qual=len(qual),
                 qualPa=round(3.1 * max(tg.values())) if tg else 0,
                 avg=round(sum(r['rbi'] for r in qual) / sum(r['risp'] for r in qual) * 100, 1),
-                avgx=round(sum(r['rbi'] for r in qual) / sum(r['rispx'] for r in qual) * 100, 1),
+                avgx=round(sum(r['rbi'] - r['rbiFree'] for r in qual)
+                           / sum(r['rispx'] for r in qual) * 100, 1),
                 avg2=round(sum(r['wRbi'] for r in qual) / sum(r['wRisp'] for r in qual) * 100, 1),
-                avg2x=round(sum(r['wRbi'] for r in qual) / sum(r['wRispx'] for r in qual) * 100, 1))
+                avg2x=round(sum(r['wRbix'] for r in qual) / sum(r['wRispx'] for r in qual) * 100, 1))
     for r in rows:
-        for k in ('wRbi', 'wRisp', 'wRispx', 'liSum', 'liPa'):
+        for k in ('rbiFree', 'wRbi', 'wRbix', 'wRisp', 'wRispx', 'liSum', 'liPa'):
             del r[k]
 
     blob = json.dumps(dict(meta=meta, players=rows), separators=(',', ':'))

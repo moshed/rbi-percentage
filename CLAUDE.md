@@ -9,11 +9,17 @@ chances. Two rates, both from real per-plate-appearance data:
 - **RBI%** = `RBI / RISP`
 - **CL%** = `sum(RBI x LI) / sum(RISP x LI)`
 
-**Two denominators, and the page toggles between them.** `risp` counts every runner in
-scoring position. `rispx` drops the trips that ended in a walk, intentional walk or
-hit-by-pitch and drove **nobody** in (`FREE_PASS`). One that forces a run in counts in
-both — Moshe's own catch, 2026-09-02: drop all walks and a bases-loaded walk puts an RBI
-on top with no chance underneath, so the rule keys on RBI, not on the event alone.
+**Two readings, and the page toggles between them.** `risp` counts every runner in
+scoring position. `rispx` keeps only the trips where he got a pitch to swing at: every
+`FREE_PASS` event (walk, intentional walk, hit-by-pitch) leaves **both** halves of the
+fraction — the forced-in run goes with the runners it was forced from.
+
+It got there in two steps on 2026-09-02, both Moshe's calls. First: drop all walks and a
+bases-loaded walk puts an RBI on top with no chance underneath, so the rule keyed on RBI.
+Then: a bases-loaded walk caps you at one run out of two chances when you never got to
+swing, so the forced run should leave too. The second version is the consistent one —
+the plate appearance is either a chance or it isn't. Worth 340 RBI out of 17,850 league
+-wide, so nobody moves more than about a point.
 
 **Walks count by default.** The `Walks aren't a chance` checkbox switches to `rispx`.
 He set that default deliberately after seeing what excluding walks does: Alvarez leads MLB
