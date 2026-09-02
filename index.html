@@ -284,13 +284,13 @@ function fillSeasons() {
    as a kind, and the numbers are recomputed from each window's own qualifier. */
 const PA_KINDS = [['q', 1], ['half', 0.5], ['quarter', 0.25], ['tenth', 0.1], ['all', 0]];
 function fillMinPa() {
-  const need = M.qualPa || 0;
+  const need = M.qualPa || META.qualPa || 0;
   const keep = $('minpa').value || 'q';
   $('minpa').innerHTML = PA_KINDS.map(([k, f]) => {
     const v = Math.round(need * f);
     const label = k === 'q' ? 'Qualifying' + (need ? ' · ' + v.toLocaleString() : '')
                 : k === 'all' ? 'All'
-                : v.toLocaleString() + '+';
+                : need ? v.toLocaleString() + '+' : '…';
     return '<option value="' + k + '">' + label + '</option>';
   }).join('');
   $('minpa').value = PA_KINDS.some(([k]) => k === keep) ? keep : 'q';
@@ -588,9 +588,9 @@ $('minpa').addEventListener('change', () => { saveControls(); loadRange(); });
 $('incbb').addEventListener('change', () => { saveControls(); applyMode(); draw(); });
 $('fs').addEventListener('change', () => { saveControls(); loadRange(); });
 fillSeasons();
-fillMinPa();
 loadControls();
-applyMode();
+applyMode();        // M has to exist before the Min PA options are sized off it
+fillMinPa();
 drawHead();
 stamp('snapshot');
 draw();
