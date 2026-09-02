@@ -1,6 +1,21 @@
 # rbi-percentage
 
-Static one-page site at **rbipercentage.dancykier.com**. GitHub Pages, repo `moshed/rbi-percentage`.
+Static one-page site at **rbipercentage.dancykier.com**. Repo `moshed/rbi-percentage`.
+
+## Hosting: Cloudflare Pages, project `rbi-percentage`
+Moved off GitHub Pages 2026-09-02. GitHub pinned `Cache-Control: max-age=600` with no
+purge, so an edit could take ten minutes to appear. Cloudflare serves
+`max-age=0, must-revalidate` (set in `dist/_headers`) and deploys in seconds.
+
+It is **direct upload, not the Git integration** — connecting Pages to GitHub is a
+browser OAuth flow only Moshe can click. `.github/workflows/deploy.yml` runs
+`wrangler pages deploy dist` on every push instead, which keeps it in step without the
+click. Secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are set on the repo.
+
+DNS still lives at Namecheap: `rbipercentage` is a CNAME to `rbi-percentage.pages.dev.`
+Repoint it with `python3 /Users/moshe/Apps/spin360/tools/nc_dns.py set-cname <host> <target>`
+— a single write, so the host never stops resolving mid-change. The GitHub Pages site and
+the repo's `CNAME` file are gone.
 
 ## What it is
 Moshe's own answer to the "RBI is just opportunity" complaint: divide the RBI by the
