@@ -187,15 +187,7 @@ footer a:hover{text-decoration:underline}
       <input type="date" id="d1"><span class="dash">&ndash;</span><input type="date" id="d2">
     </label>
     <label for="minpa">Min PA</label>
-    <select id="minpa">
-      <option value="q" selected>Qualifying</option>
-      <option value="1">All</option>
-      <option value="50">50</option>
-      <option value="100">100</option>
-      <option value="200">200</option>
-      <option value="300">300</option>
-      <option value="400">400</option>
-    </select>
+    <select id="minpa"></select>
     <label class="tog"><input type="checkbox" id="incbb">Count walks as chances</label>
     <span class="count" id="count"></span>
   </div>
@@ -285,6 +277,31 @@ function fillSeasons() {
   $('s1').value = now;
   $('s2').value = now;
 }
+/* Min PA scales with the window: over eighteen seasons "qualifying" is ~9,000 plate
+   appearances, so fixed options like 100 or 400 are meaningless. The choice is stored
+   as a kind, and the numbers are recomputed from each window's own qualifier. */
+const PA_KINDS = [['q', 1], ['half', 0.5], ['quarter', 0.25], ['tenth', 0.1], ['all', 0]];
+function fillMinPa() {
+  const need = M.qualPa || 0;
+  const keep = $('minpa').value || 'q';
+  $('minpa').innerHTML = PA_KINDS.map(([k, f]) => {
+    const v = Math.round(need * f);
+    const label = k === 'q' ? 'Qualifying' + (need ? ' · ' + v.toLocaleString() : '')
+                : k === 'all' ? 'All'
+                : v.toLocaleString() + '+';
+    return '<option value="' + k + '">' + label + '</option>';
+  }).join('');
+  $('minpa').value = PA_KINDS.some(([k]) => k === keep) ? keep : 'q';
+}
+/** The plate-appearance floor to ask Postgres for. -1 means "whatever qualifies". */
+function minPaValue() {
+  const k = $('minpa').value;
+  if (k === 'q') return -1;
+  if (k === 'all') return 1;
+  const f = (PA_KINDS.find(([x]) => x === k) || [, 1])[1];
+  return Math.max(1, Math.round((M.qualPa || 0) * f));
+}
+
 /** The window the table covers. Dates win; blank dates mean the whole season span. */
 function currentRange() {
   const a = Math.min(+$('s1').value, +$('s2').value);
@@ -325,7 +342,7 @@ $('head').innerHTML = COLS.map(c =>
 function draw() {
   const q = $('q').value.trim().toLowerCase();
   const sel = $('minpa').value;
-  let rows = sel === 'q' ? P.filter(p => p.q) : P.filter(p => p.pa >= +sel);
+  let rows = sel === 'q' ? P.filter(p => p.q) : P.filter(p => p.pa >= minPaValue());
   if (q) rows = rows.filter(p =>
     p.n.toLowerCase().includes(q) ||
     p.t.toLowerCase().includes(q) ||
@@ -346,7 +363,8 @@ function draw() {
 
   $('count').innerHTML =
     '<b>' + rows.length + '</b> of ' + P.length + ' hitters' +
-    (sel === 'q' ? ' · qualified = 3.1 PA per team game (<b>' + M.qualPa + '</b>)' : '') +
+    (sel === 'q' ? ' · qualifying = 3.1 PA per team game (<b>' + (M.qualPa || 0).toLocaleString() + '</b>)' : '') +
+    (rows.length >= 900 ? ' · <b>top 900</b> by PA' : '') +
     ' · qualified average: RBI% <b>' + M.avg + '%</b> · CL% <b>' + M.avg2 + '%</b>';
   $('empty').hidden = rows.length > 0;
   shown = rows;
@@ -460,9 +478,16 @@ function rpc(fn, body) {
 let loadToken = 0;
 function loadRange() {
   const [d1, d2] = currentRange();
+  const whole = !$('d1').value && !$('d2').value;   // whole seasons take the fast path
+  const a = Math.min(+$('s1').value, +$('s2').value);
+  const b = Math.max(+$('s1').value, +$('s2').value);
+  const min_pa = minPaValue();
   const mine = ++loadToken;                       // a slower earlier request must not win
-  $('count').textContent = 'Loading ' + d1 + ' to ' + d2 + '…';
-  Promise.all([rpc('rbipct_range', { d1, d2 }), rpc('rbipct_range_meta', { d1, d2 })])
+  $('count').textContent = 'Loading…';
+  Promise.all([
+    whole ? rpc('rbipct_seasons', { a, b, min_pa }) : rpc('rbipct_range', { d1, d2, min_pa }),
+    whole ? rpc('rbipct_seasons_meta', { a, b })   : rpc('rbipct_range_meta', { d1, d2 })
+  ])
     .then(([rows, meta]) => {
       if (mine !== loadToken) return;
       if (!rows.length) { $('count').textContent = 'No games in that range.'; return; }
@@ -474,6 +499,7 @@ function loadRange() {
       }));
       META = { ...META, ...(meta[0] || {}), range: [d1, d2] };
       applyMode();
+      fillMinPa();
       stamp('live');
       draw();
     })
@@ -482,10 +508,12 @@ function loadRange() {
 
 function stamp(kind) {
   const r = M.range;
-  const span = !r ? M.season + ' regular season'
-    : (r[0].slice(0, 4) === r[1].slice(0, 4) && r[0].endsWith('-01-01') && r[1].endsWith('-12-31'))
-      ? r[0].slice(0, 4) + ' regular season'
-      : r[0] + ' to ' + r[1];
+  let span;
+  if (!r) span = M.season + ' regular season';
+  else if (r[0].endsWith('-01-01') && r[1].endsWith('-12-31')) {
+    const a = r[0].slice(0, 4), b = r[1].slice(0, 4);
+    span = a === b ? a + ' regular season' : a + '\u2013' + b + ' regular seasons';
+  } else span = r[0] + ' to ' + r[1];
   $('stamp').textContent = span + ' · updated ' + M.updated +
     (kind === 'live' ? ' · live' : ' · offline copy');
 }
@@ -526,9 +554,10 @@ function fitName() {
 $('q').addEventListener('input', draw);
 ['s1', 's2', 'd1', 'd2'].forEach(id =>
   $(id).addEventListener('change', () => { saveControls(); loadRange(); }));
-$('minpa').addEventListener('change', () => { saveControls(); draw(); });
+$('minpa').addEventListener('change', () => { saveControls(); loadRange(); });
 $('incbb').addEventListener('change', () => { saveControls(); applyMode(); draw(); });
 fillSeasons();
+fillMinPa();
 loadControls();
 applyMode();
 stamp('snapshot');

@@ -13,6 +13,19 @@ curl -s -X POST "https://api.supabase.com/v1/projects/atqhfbaurrmivjarowco/datab
   -H "User-Agent: supabase-cli/2.98.2" -d '{"query":"..."}'
 ```
 
+## The shape that matters: `rbipct_day`
+**One row per hitter per day, every season since 2009** (Justin Turner's debut year).
+Everything the page shows is derived from it, so a date range is a `WHERE` clause.
+
+Eighteen seasons of raw plate appearances would have been ~3.2M rows and ~550 MB on a
+project **five other apps share**. The rollup is ~870k rows and ~70 MB and answers the
+same questions, because nobody picks a window finer than a day. `rbipct_pa` keeps the raw
+rows for the **current season only**.
+
+AVG, OBP and SLG are not stored — they are rebuilt from `h`, `tb`, `ab`, `bb`, `hbp` and
+`sf`, which are themselves counted off the `eventType` of each plate appearance. Checked
+against the official season figures: they agree to the third decimal.
+
 ## Tables
 
 | Object | What it holds |
@@ -20,8 +33,26 @@ curl -s -X POST "https://api.supabase.com/v1/projects/atqhfbaurrmivjarowco/datab
 | `rbipct_pa` | One row per plate appearance: `game_pk, ab_index, game_date, batter_id, risp, rbi, li`. ~158k rows for 2026. PK `(game_pk, ab_index)`. |
 | `rbipct_player` | Season totals per hitter, plus the `qualified` flag. |
 | `rbipct_season` | `qual_pa` for the season (3.1 × the leading team's games played). |
-| `rbipct_leaders` | View. One row per hitter with `risp`, `pct` (RBI%) and `pct2` (CL%) already computed. **This is what the page reads.** |
-| `rbipct_meta` | View. Pooled league rates over qualified hitters, plus `qualPa` and the last update time. |
+| `rbipct_day` | **One row per hitter per day, 2009 onward.** The page reads this, through the functions below. |
+| `rbipct_name` | Player id to name and most recent club. Names live once, not once per season. |
+| `rbipct_slate` | How many games the majors played each day. Lets "qualifying" scale to any window. |
+| `rbipct_leaders` / `rbipct_meta` | Older per-season views. Still correct, no longer read by the page. |
+
+## Functions the page calls
+| Function | What it does |
+|---|---|
+| `rbipct_range(d1, d2)` | The leaderboard over any window. Sub-second across a full season, ~1.2 s across three. |
+| `rbipct_range_meta(d1, d2)` | League rates over qualified hitters for the same window, plus `qualPa`. |
+| `rbipct_team_games(d1, d2)` | Team games in the window, from `rbipct_slate`: `sum(games) * 2 / 30`. Qualifying is `3.1 x` this. |
+| `rbipct_rollup(d1, d2)` | Rebuilds `rbipct_day` from `rbipct_pa` for a window. The daily job calls it after ingest, so the rollup never drifts. |
+
+Both range functions are `POST /rest/v1/rpc/<name>` with `{"d1": "...", "d2": "..."}`.
+
+## Loading a past season
+```bash
+SUPABASE_SERVICE_KEY=<service_role> python3 tools/history.py --from 2009 --to 2024
+```
+About 80 seconds a season. Idempotent — the upsert is keyed on `(game_date, batter_id)`.
 
 RLS is on for all three tables with a read-only policy for `anon`, so the page ships the
 anon key in plain sight and nobody can write.
