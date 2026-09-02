@@ -85,7 +85,9 @@ footer a{color:var(--accent)}
     <b>CL%</b> <span class="f">&Sigma;(RBI &times; LI) &divide; &Sigma;(RISP &times; LI)</span> &mdash; the same
     ratio with every plate appearance multiplied by its <b>leverage index</b>, MLB&rsquo;s measure of how much
     that moment swings the game. A bases-loaded ninth counts several times a blowout.
-    <b>LI</b> is his average leverage. Click any heading to sort.
+    <b>LI</b> is his average leverage. <b>Diff</b> is how many places a hitter moves from the RBI
+    leaderboard to the RBI% leaderboard &mdash; green means the rate likes him more than the raw count does.
+    Diff re-ranks against whoever the Min PA filter leaves on screen. Click any heading to sort.
   </p>
 
   <div class="bar">
@@ -129,6 +131,7 @@ const COLS = [
   ['RBI',    'rbi',  ''],
   ['RISP',   'risp', ''],
   ['RBI%',   'pct',  'key'],
+  ['Diff',   '_d',   ''],
   ['CL%',    'pct2', 'split'],
   ['LI',     'li',   ''],
   ['AVG',    'avg',  'split'],
@@ -147,6 +150,11 @@ function draw() {
   const minPa = +document.getElementById('minpa').value;
   let rows = P.filter(p => p.pa >= minPa);
   if (q) rows = rows.filter(p => p.n.toLowerCase().includes(q) || p.t.toLowerCase() === q);
+  // Diff is how far a hitter moves between the two leaderboards, ranked over
+  // whoever is on screen — change Min PA and the ranks re-run.
+  rows.slice().sort((a, b) => b.rbi - a.rbi).forEach((p, i) => p._rr = i + 1);
+  rows.slice().sort((a, b) => b.pct - a.pct).forEach((p, i) => p._pr = i + 1);
+  rows.forEach(p => p._d = p._rr - p._pr);
   rows.sort((a, b) => {
     const x = a[sortKey], y = b[sortKey];
     const v = (typeof x === 'string' && isNaN(parseFloat(x)))
@@ -164,6 +172,10 @@ function draw() {
       if (k === 'n')  return '<td class="nm">' + p.n + '</td>';
       let v = p[k], cls = c[2] === 'split' ? 'split' : '';
       if (k === 'li') v = v.toFixed(2);
+      if (k === '_d') {
+        cls += ' key ' + (v > 0 ? 'hi' : v < 0 ? 'lo' : '');
+        v = v > 0 ? '\u25B2 ' + v : v < 0 ? '\u25BC ' + (-v) : '—';
+      }
       if (k === 'pct' || k === 'pct2') {
         const ref = k === 'pct' ? M.avg : M.avg2;
         cls += ' key ' + (p.risp && v >= ref ? 'hi' : 'lo');
