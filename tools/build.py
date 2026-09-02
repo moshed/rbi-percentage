@@ -84,7 +84,7 @@ def season_rows(s, tg):
             rbi=st.get('rbi', 0), hr=st.get('homeRuns', 0),
             avg=st.get('avg', '.000'), ops=st.get('ops', '.000'),
             q=1 if st['plateAppearances'] >= 3.1 * games else 0,
-            risp=0, rispPa=0, wRbi=0.0, wRisp=0.0, liSum=0.0, liPa=0)
+            risp=0, rispx=0, wRbi=0.0, wRisp=0.0, wRispx=0.0, liSum=0.0, liPa=0)
     return players
 
 
@@ -139,13 +139,17 @@ def add_leverage(players, risp, games):
                     continue
                 res = play.get('result', {})
                 rbi = res.get('rbi') or 0
-                if res.get('eventType') in FREE_PASS and rbi == 0:
-                    continue                      # no pitch to drive, no chance charged
+                # A walk or hit-by-pitch that drove nobody in is only dropped from the
+                # second denominator; the page toggles between the two.
+                free = res.get('eventType') in FREE_PASS and rbi == 0
                 li = play.get('leverageIndex')
                 li = 1.0 if li is None else float(li)
                 p['risp'] += n
                 p['wRbi'] += rbi * li
                 p['wRisp'] += n * li
+                if not free:
+                    p['rispx'] += n
+                    p['wRispx'] += n * li
                 p['liSum'] += li
                 p['liPa'] += 1
             done += 1
@@ -176,21 +180,25 @@ def main():
     rows = sorted(players.values(), key=lambda r: -r['rbi'])
     for r in rows:
         r['pct'] = round(r['rbi'] / r['risp'] * 100, 1) if r['risp'] else 0.0
+        r['pctx'] = round(r['rbi'] / r['rispx'] * 100, 1) if r['rispx'] else 0.0
         r['pct2'] = round(r['wRbi'] / r['wRisp'] * 100, 1) if r['wRisp'] else 0.0
+        r['pct2x'] = round(r['wRbi'] / r['wRispx'] * 100, 1) if r['wRispx'] else 0.0
 
     qual = [r for r in rows if r['q']]
     # Out of season the leaderboard is empty or nobody has qualified yet. Leave the
     # last good page alone rather than writing a blank one.
-    if not rows or not qual or not sum(r['risp'] for r in qual):
+    if not rows or not qual or not sum(r.get('risp', 0) for r in qual):
         print(f"nothing to write: {len(rows)} hitters, {len(qual)} qualified — page left as is")
         return
 
     meta = dict(season=s, updated=str(datetime.date.today()), n=len(rows), qual=len(qual),
                 qualPa=round(3.1 * max(tg.values())) if tg else 0,
                 avg=round(sum(r['rbi'] for r in qual) / sum(r['risp'] for r in qual) * 100, 1),
-                avg2=round(sum(r['wRbi'] for r in qual) / sum(r['wRisp'] for r in qual) * 100, 1))
+                avgx=round(sum(r['rbi'] for r in qual) / sum(r['rispx'] for r in qual) * 100, 1),
+                avg2=round(sum(r['wRbi'] for r in qual) / sum(r['wRisp'] for r in qual) * 100, 1),
+                avg2x=round(sum(r['wRbi'] for r in qual) / sum(r['wRispx'] for r in qual) * 100, 1))
     for r in rows:
-        for k in ('wRbi', 'wRisp', 'liSum', 'liPa'):
+        for k in ('wRbi', 'wRisp', 'wRispx', 'liSum', 'liPa'):
             del r[k]
 
     blob = json.dumps(dict(meta=meta, players=rows), separators=(',', ':'))

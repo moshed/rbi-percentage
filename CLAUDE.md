@@ -9,12 +9,17 @@ chances. Two rates, both from real per-plate-appearance data:
 - **RBI%** = `RBI / RISP`
 - **CL%** = `sum(RBI x LI) / sum(RISP x LI)`
 
-**A walk or hit-by-pitch is not a chance.** `FREE_PASS = {walk, intent_walk,
-hit_by_pitch}`: when one of those ends a plate appearance and drives in **no** run, its
-runners are dropped from the denominator. When it forces a run in (bases loaded) it counts
-on both sides — Moshe's own catch, 2026-09-02, and the reason the rule is written on RBI
-rather than on the event alone. Drop all walks and a bases-loaded walk would put an RBI on
-top with no chance underneath.
+**Two denominators, and the page toggles between them.** `risp` counts every runner in
+scoring position. `rispx` drops the trips that ended in a walk, intentional walk or
+hit-by-pitch and drove **nobody** in (`FREE_PASS`). One that forces a run in counts in
+both — Moshe's own catch, 2026-09-02: drop all walks and a bases-loaded walk puts an RBI
+on top with no chance underneath, so the rule keys on RBI, not on the event alone.
+
+**Walks count by default.** The `Walks aren't a chance` checkbox switches to `rispx`.
+He set that default deliberately after seeing what excluding walks does: Alvarez leads MLB
+with 29 intentional walks, 25 of them with a runner in scoring position, and dropping them
+takes him from 62.3% to 93.1% against a 45.6% league. Both views ship; the toggle is the
+answer, not a new default.
 
 `RISP` counts runners in scoring position one at a time — second and third is two, a man
 on first is none. Every RBI stays in the numerator, home runs included: **do not subtract
