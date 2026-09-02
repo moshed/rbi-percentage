@@ -82,6 +82,8 @@ def season_rows(s, tg):
             tn=sp.get('team', {}).get('name', ''),      # searchable full club name
             g=st.get('gamesPlayed', 0), pa=st['plateAppearances'],
             rbi=st.get('rbi', 0), hr=st.get('homeRuns', 0),
+            ab=st.get('atBats', 0), bb=st.get('baseOnBalls', 0),
+            ibb=st.get('intentionalWalks', 0), hbp=st.get('hitByPitch', 0),
             avg=st.get('avg', '.000'), ops=st.get('ops', '.000'),
             q=1 if st['plateAppearances'] >= 3.1 * games else 0,
             risp=0, rispx=0, wRbi=0.0, wRisp=0.0, wRispx=0.0, liSum=0.0, liPa=0)

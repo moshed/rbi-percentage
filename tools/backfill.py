@@ -41,6 +41,7 @@ def main():
     post('rbipct_player', [dict(
         season=s, player_id=p['id'], name=p['n'], team=p['t'], team_name=p.get('tn', ''),
         g=p['g'], pa=p['pa'], rbi=p['rbi'], hr=p['hr'], avg=p['avg'], ops=p['ops'],
+        ab=p['ab'], bb=p['bb'], ibb=p['ibb'], hbp=p['hbp'],
         qualified=bool(p['q'])) for p in players.values()], 'season,player_id')
 
     # base state at the deciding pitch of every plate appearance

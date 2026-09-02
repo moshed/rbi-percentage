@@ -96,6 +96,8 @@ async function refreshPlayers(season: number) {
       team: TEAM_ABBR[teamName] ?? '---', team_name: teamName,
       g: sp.stat.gamesPlayed ?? 0, pa: sp.stat.plateAppearances,
       rbi: sp.stat.rbi ?? 0, hr: sp.stat.homeRuns ?? 0,
+      ab: sp.stat.atBats ?? 0, bb: sp.stat.baseOnBalls ?? 0,
+      ibb: sp.stat.intentionalWalks ?? 0, hbp: sp.stat.hitByPitch ?? 0,
       avg: sp.stat.avg ?? '.000', ops: sp.stat.ops ?? '.000',
       qualified: sp.stat.plateAppearances >= 3.1 * g,
       updated_at: new Date().toISOString(),
