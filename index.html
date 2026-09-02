@@ -95,8 +95,15 @@ td.nm{text-align:left;font-family:var(--sans);letter-spacing:-.005em;
 td.nm span{display:flex;align-items:center;gap:9px;height:32px}
 td.nm img{width:30px;height:30px;flex:none;border-radius:50%;object-fit:cover;
   background:var(--chip);border:1.5px solid var(--rule-soft)}
-td.nm .pn{font-style:normal;font-weight:700;font-size:12.5px;line-height:1.16;
+td.nm .pn{font-style:normal;font-weight:700;font-size:14.5px;line-height:1.16;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+td.nm .pn em{font-style:normal}
+/* Scrolled sideways: the name splits first / last at a smaller size and the
+   frozen block narrows, so more of the table fits. Row height is unchanged —
+   the flex row is a fixed 32px either way. */
+.scroll.narrow{--wname:140px}
+.scroll.narrow td.nm .pn{font-size:11.5px;line-height:1.2}
+.scroll.narrow td.nm .pn em{display:block}
 td.tm{font-family:var(--sans);font-weight:700;font-size:12px;letter-spacing:.04em;color:var(--ink-2)}
 td.key{font-weight:600}
 td.hi{color:var(--accent)}
@@ -255,8 +262,14 @@ function draw() {
     '<tr>' + COLS.map(c => {
       const k = c[1];
       if (k === '_i') return '<td>' + (i + 1) + '</td>';
-      if (k === 'n') return '<td class="nm"><span><img loading="lazy" alt="" src="' + shot(p.id) +
-        '" onerror="this.style.visibility=\'hidden\'"><i class="pn">' + p.n + '</i></span></td>';
+      if (k === 'n') {
+        const sp = p.n.indexOf(' ');
+        const first = sp < 0 ? p.n : p.n.slice(0, sp);
+        const last = sp < 0 ? '' : p.n.slice(sp + 1);
+        return '<td class="nm"><span><img loading="lazy" alt="" src="' + shot(p.id) +
+          '" onerror="this.style.visibility=\'hidden\'"><i class="pn">' +
+          '<em class="f">' + first + '</em> ' + last + '</i></span></td>';
+      }
       let v = p[k], cls = c[2] === 'split' ? 'split' : (c[2] === 'tm' ? 'tm' : '');
       if (k === '_d') {
         cls += ' key ' + (v > 0 ? 'hi' : v < 0 ? 'lo' : '');
@@ -366,6 +379,13 @@ function stamp(kind) {
   $('stamp').textContent = M.season + ' regular season · updated ' + M.updated +
     (kind === 'live' ? ' · live' : ' · offline copy');
 }
+
+(function () {
+  const sc = document.querySelector('.scroll');
+  const sync = () => sc.classList.toggle('narrow', sc.scrollLeft > 4);
+  sc.addEventListener('scroll', sync, { passive: true });
+  sync();
+})();
 
 $('q').addEventListener('input', draw);
 $('minpa').addEventListener('change', draw);

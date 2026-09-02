@@ -44,8 +44,13 @@ The rank, headshot and name are frozen (`position: sticky; left`) so they surviv
 sideways scroll. Their `left` offsets come from `--wrank` / `--wname` on `:root` — change
 a column width there, not on the cells, or the two get out of step. Frozen cells must
 carry their own background (plain, banded and hover), otherwise scrolled content shows
-through them. The name sits in an `.pn` box clamped to two lines inside a fixed 32px
-flex row, so a long name wraps instead of changing the row height.
+through them. The name sits in a `.pn` box clamped to two lines inside a fixed 32px
+flex row, so it never changes the row height.
+
+A `scroll` handler puts `.narrow` on the container as soon as `scrollLeft > 4`. That one
+class drops the name to 11.5px, breaks it first-name-over-last (`.pn em{display:block}`)
+and shrinks `--wname` to 140px, so more of the table fits while you are reading across.
+At rest the name is back to one full-size line.
 
 Desktop layout is pinned: `body` does not scroll, the table does, so the column headings
 stay visible. Under 820px it falls back to normal page flow with a static heading row.
