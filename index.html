@@ -189,6 +189,7 @@ footer a:hover{text-decoration:underline}
     <label for="minpa">Min PA</label>
     <select id="minpa"></select>
     <label class="tog"><input type="checkbox" id="incbb">Count walks as chances</label>
+    <label class="tog" id="fslabel"><input type="checkbox" id="fs">Qualified seasons only</label>
     <span class="count" id="count"></span>
   </div>
 
@@ -247,6 +248,7 @@ const COLS = [
   ['#',      '_i',   'left',  'Where he sits in the column you sorted by.'],
   ['Player', 'n',    'left',  'Click a heading to sort. Search by name, club or three-letter code.'],
   ['Tm',     't',    'tm',    'His club. Search accepts “Yankees”, “New York” or “NYY”.'],
+  ['Sn',     'seasons','',    'How many seasons of his went into these totals.'],
   ['G',      'g',    '',      'Games played.'],
   ['PA',     'pa',   '',      'Plate appearances — every trip to the plate, walks included.'],
   ['AB',     'ab',   '',      'At-bats. Plate appearances minus walks, hit-by-pitches and sacrifices.'],
@@ -313,6 +315,7 @@ function loadControls() {
     const v = JSON.parse(localStorage.getItem(REMEMBER) || '{}');
     if (v.minpa && [...$('minpa').options].some(o => o.value === v.minpa)) $('minpa').value = v.minpa;
     if (typeof v.incbb === 'boolean') $('incbb').checked = v.incbb;
+    if (typeof v.fs === 'boolean') $('fs').checked = v.fs;
     if (v.s1 && $('s1').querySelector('[value="' + v.s1 + '"]')) $('s1').value = v.s1;
     if (v.s2 && $('s2').querySelector('[value="' + v.s2 + '"]')) $('s2').value = v.s2;
     if (v.d1) $('d1').value = v.d1;
@@ -322,7 +325,7 @@ function loadControls() {
 function saveControls() {
   try {
     localStorage.setItem(REMEMBER, JSON.stringify({
-      minpa: $('minpa').value, incbb: $('incbb').checked,
+      minpa: $('minpa').value, incbb: $('incbb').checked, fs: $('fs').checked,
       s1: $('s1').value, s2: $('s2').value, d1: $('d1').value, d2: $('d2').value }));
   } catch (e) { /* storage unavailable; the page still works */ }
 }
@@ -333,11 +336,17 @@ const shot = id => 'https://img.mlbstatic.com/mlb-photos/image/upload/' +
 let sortKey = 'pct', desc = true;
 let shown = [];
 
-$('head').innerHTML = COLS.map(c =>
-  '<th data-k="' + c[1] + '" tabindex="0" class="' + (c[2] === 'split' ? 'split' : '') + '">' +
-  c[0] + '<span class="ar"> ▾</span>' +
-  '<span class="q" role="button" tabindex="0" aria-label="What is ' + c[0] + '?">?</span></th>'
-).join('');
+function visibleCols() {
+  return COLS.filter(c => c[1] !== 'seasons' || M.multi);
+}
+function drawHead() {
+  $('head').innerHTML = visibleCols().map(c =>
+    '<th data-k="' + c[1] + '" tabindex="0" class="' + (c[2] === 'split' ? 'split' : '') + '">' +
+    c[0] + '<span class="ar"> ▾</span>' +
+    '<span class="q" role="button" tabindex="0" aria-label="What is ' + c[0] + '?">?</span></th>'
+  ).join('');
+  wireHead();
+}
 
 function draw() {
   const q = $('q').value.trim().toLowerCase();
@@ -369,8 +378,9 @@ function draw() {
   $('empty').hidden = rows.length > 0;
   shown = rows;
 
+  const cols = visibleCols();
   $('body').innerHTML = rows.map((p, i) =>
-    '<tr>' + COLS.map(c => {
+    '<tr>' + cols.map(c => {
       const k = c[1];
       if (k === '_i') return '<td>' + (i + 1) + '</td>';
       if (k === 'n') {
@@ -401,8 +411,9 @@ function draw() {
   fitName();
 }
 
-/* ---- sorting ---- */
-document.querySelectorAll('#head th').forEach((th, i) => {
+/* Sort and tooltip handlers. Re-run whenever the heading row is rebuilt. */
+function wireHead() {
+  document.querySelectorAll('#head th').forEach(th => {
   const go = () => {
     const k = th.dataset.k;
     if (k === '_i') return;
@@ -411,20 +422,23 @@ document.querySelectorAll('#head th').forEach((th, i) => {
     draw();
   };
   th.addEventListener('click', e => { if (!e.target.classList.contains('q')) go(); });
-  th.addEventListener('keydown', e => {
-    if (e.target === th && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(); }
+    th.addEventListener('keydown', e => {
+      if (e.target === th && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(); }
+    });
   });
-});
+  columnTips();
+}
 
 /* ---- column tooltips: hover on a pointer, tap the ? anywhere ---- */
-(function () {
+function columnTips() {
   const tip = $('tip');
   let pinned = null, hovered = null;
 
   function show(th) {
     if (!th) return;
-    const i = [...document.querySelectorAll('#head th')].indexOf(th);
-    tip.innerHTML = '<b>' + COLS[i][0] + '</b> — ' + COLS[i][3];
+    const c = visibleCols().find(x => x[1] === th.dataset.k);
+    if (!c) return;
+    tip.innerHTML = '<b>' + c[0] + '</b> — ' + c[3];
     tip.classList.add('on');
     const r = th.getBoundingClientRect();
     tip.style.left = '0px'; tip.style.top = '0px';
@@ -457,7 +471,8 @@ document.querySelectorAll('#head th').forEach((th, i) => {
   // The headings are sticky, so a scroll must reposition the tooltip, not close it.
   addEventListener('scroll', () => { if (tip.classList.contains('on')) show(pinned || hovered); }, true);
   addEventListener('resize', hide);
-})();
+}
+
 
 /* ---- live numbers ----
    The page ships with a snapshot of the current season so it renders instantly
@@ -467,12 +482,23 @@ document.querySelectorAll('#head th').forEach((th, i) => {
 const SB = 'https://atqhfbaurrmivjarowco.supabase.co/rest/v1';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0cWhmYmF1cnJtaXZqYXJvd2NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzODc2ODgsImV4cCI6MjA5NTk2MzY4OH0.buWqvUnwid4QEE6m9OFM7n1tu51mcogTc01oG7pdtJI';
 
-function rpc(fn, body) {
-  return fetch(SB + '/rpc/' + fn, {
+function call(fn, body, qs) {
+  return fetch(SB + '/rpc/' + fn + (qs || ''), {
     method: 'POST',
     headers: { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   }).then(r => { if (!r.ok) throw new Error(fn + ' ' + r.status); return r.json(); });
+}
+/* PostgREST hands back at most 1000 rows a request, and the full span has ~7000
+   hitters, so page until a short one comes back. */
+async function rpcAll(fn, body) {
+  const PAGE = 1000, out = [];
+  for (let offset = 0; offset < 20000; offset += PAGE) {
+    const page = await call(fn, body, '?limit=' + PAGE + '&offset=' + offset);
+    out.push(...page);
+    if (page.length < PAGE) break;
+  }
+  return out;
 }
 
 let loadToken = 0;
@@ -484,9 +510,12 @@ function loadRange() {
   const min_pa = minPaValue();
   const mine = ++loadToken;                       // a slower earlier request must not win
   $('count').textContent = 'Loading…';
+  const full_seasons = $('fs').checked;
   Promise.all([
-    whole ? rpc('rbipct_seasons', { a, b, min_pa }) : rpc('rbipct_range', { d1, d2, min_pa }),
-    whole ? rpc('rbipct_seasons_meta', { a, b })   : rpc('rbipct_range_meta', { d1, d2 })
+    whole ? rpcAll('rbipct_seasons', { a, b, min_pa, full_seasons })
+          : rpcAll('rbipct_range', { d1, d2, min_pa }),
+    whole ? call('rbipct_seasons_meta', { a, b, full_seasons })
+          : call('rbipct_range_meta', { d1, d2 })
   ])
     .then(([rows, meta]) => {
       if (mine !== loadToken) return;
@@ -497,9 +526,10 @@ function loadRange() {
         pct2: Number(r.pct2) || 0, pct2x: Number(r.pct2x) || 0,
         risp: Number(r.risp) || 0, rispx: Number(r.rispx) || 0
       }));
-      META = { ...META, ...(meta[0] || {}), range: [d1, d2] };
+      META = { ...META, ...(meta[0] || {}), range: [d1, d2], multi: b > a };
       applyMode();
       fillMinPa();
+      drawHead();
       stamp('live');
       draw();
     })
@@ -556,10 +586,12 @@ $('q').addEventListener('input', draw);
   $(id).addEventListener('change', () => { saveControls(); loadRange(); }));
 $('minpa').addEventListener('change', () => { saveControls(); loadRange(); });
 $('incbb').addEventListener('change', () => { saveControls(); applyMode(); draw(); });
+$('fs').addEventListener('change', () => { saveControls(); loadRange(); });
 fillSeasons();
 fillMinPa();
 loadControls();
 applyMode();
+drawHead();
 stamp('snapshot');
 draw();
 loadRange();

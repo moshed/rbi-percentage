@@ -53,8 +53,14 @@ Two limits shaped the design, both worth remembering:
 - **The `anon` role gets a 3-second statement timeout.** A raw scan of all 860k daily rows
   lands just over it, which is why whole seasons go through the materialized rollup.
 - **PostgREST caps a response at 1000 rows**, and the full span has ~7000 hitters. Both
-  functions take `min_pa` and filter in Postgres; `-1` means "whatever qualifies for this
-  window". They also `order by pa desc limit 900` as a backstop.
+  functions take `min_pa` and filter in Postgres (`-1` means "whatever qualifies for this
+  window"), and the page pages through with `?limit=1000&offset=N` until a short page
+  comes back. The `Range` header does **not** work on an RPC POST — it is silently
+  ignored and you get page one back every time. Use limit/offset.
+
+`rbipct_seasons` also takes `full_seasons boolean`: when true it keeps only the seasons a
+hitter qualified in (`rbipct_season_agg.qualified`) and drops the rest whole, and the
+qualifier becomes one season's worth rather than the span's.
 
 Both range functions are `POST /rest/v1/rpc/<name>` with `{"d1": "...", "d2": "..."}`.
 
