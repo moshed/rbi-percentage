@@ -114,6 +114,7 @@ def season(s):
                 a['w_rbi'] += rbi * li
                 a['w_risp'] += n * li
                 if not free:
+                    a['rbi_x'] += rbi
                     a['rispx'] += n
                     a['w_rbix'] += rbi * li
                     a['w_rispx'] += n * li
@@ -139,7 +140,7 @@ def season(s):
     rows = [dict(season=s, game_date=d, batter_id=b,
                  pa=a['pa'], ab=a['ab'], h=a['h'], tb=a['tb'], hr=a['hr'],
                  bb=a['bb'], ibb=a['ibb'], hbp=a['hbp'], sf=a['sf'],
-                 rbi=a['rbi'], risp=a['risp'], rispx=a['rispx'],
+                 rbi=a['rbi'], rbi_x=a['rbi_x'], risp=a['risp'], rispx=a['rispx'],
                  w_rbi=round(a['w_rbi'], 3), w_rbix=round(a['w_rbix'], 3),
                  w_risp=round(a['w_risp'], 3), w_rispx=round(a['w_rispx'], 3))
             for (d, b), a in agg.items()]
