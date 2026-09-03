@@ -185,10 +185,10 @@ def main():
 
     rows = sorted(players.values(), key=lambda r: -r['rbi'])
     for r in rows:
-        r['pct'] = round(r['rbi'] / r['risp'] * 100, 1) if r['risp'] else 0.0
-        r['pctx'] = round((r['rbi'] - r['rbiFree']) / r['rispx'] * 100, 1) if r['rispx'] else 0.0
-        r['pct2'] = round(r['wRbi'] / r['wRisp'] * 100, 1) if r['wRisp'] else 0.0
-        r['pct2x'] = round(r['wRbix'] / r['wRispx'] * 100, 1) if r['wRispx'] else 0.0
+        r['pct'] = round(r['rbi'] / r['risp'] * 100, 2) if r['risp'] else 0.0
+        r['pctx'] = round((r['rbi'] - r['rbiFree']) / r['rispx'] * 100, 2) if r['rispx'] else 0.0
+        r['pct2'] = round(r['wRbi'] / r['wRisp'] * 100, 2) if r['wRisp'] else 0.0
+        r['pct2x'] = round(r['wRbix'] / r['wRispx'] * 100, 2) if r['wRispx'] else 0.0
 
     qual = [r for r in rows if r['q']]
     # Out of season the leaderboard is empty or nobody has qualified yet. Leave the
@@ -199,11 +199,11 @@ def main():
 
     meta = dict(season=s, updated=str(datetime.date.today()), n=len(rows), qual=len(qual),
                 qualPa=round(3.1 * max(tg.values())) if tg else 0,
-                avg=round(sum(r['rbi'] for r in qual) / sum(r['risp'] for r in qual) * 100, 1),
+                avg=round(sum(r['rbi'] for r in qual) / sum(r['risp'] for r in qual) * 100, 2),
                 avgx=round(sum(r['rbi'] - r['rbiFree'] for r in qual)
-                           / sum(r['rispx'] for r in qual) * 100, 1),
-                avg2=round(sum(r['wRbi'] for r in qual) / sum(r['wRisp'] for r in qual) * 100, 1),
-                avg2x=round(sum(r['wRbix'] for r in qual) / sum(r['wRispx'] for r in qual) * 100, 1))
+                           / sum(r['rispx'] for r in qual) * 100, 2),
+                avg2=round(sum(r['wRbi'] for r in qual) / sum(r['wRisp'] for r in qual) * 100, 2),
+                avg2x=round(sum(r['wRbix'] for r in qual) / sum(r['wRispx'] for r in qual) * 100, 2))
     for r in rows:
         for k in ('rbiFree', 'wRbi', 'wRbix', 'wRisp', 'wRispx', 'liSum', 'liPa'):
             del r[k]

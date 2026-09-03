@@ -130,7 +130,13 @@ network dependency at runtime except Google Fonts.
 across the whole span. That span rule is ~9,000 plate appearances over eighteen years and
 leaves six hitters on the list; Moshe caught it. The Min PA figure shown is one season's
 worth (~502) and the other options are fractions of that, so the choice stays meaningful
-whatever window is on screen.
+whatever window is on screen. Over a **single** season the options are fractions of the
+qualifier (half, quarter, a tenth) for looking further down the board; over **several**
+they are multiples (2x, 4x, 8x), because there a season's worth is the floor rather than
+the ceiling — a quarter of one season across eighteen years is noise.
+
+Rates print to **two decimals**. In the band around the league average a tenth of a point
+is worth roughly forty places, so one decimal hid real separation.
 
 Two controls, deliberately separate:
 
